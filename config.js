@@ -13,5 +13,5 @@
 // -----------------------------------------------------------------
 window.FIELDFLOW_CONFIG = {
   SUPABASE_URL: 'https://vbszdqxsrmediacvxaie.supabase.co',
-  SUPABASE_ANON_KEY: ''
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZic3pkcXhzcm1lZGlhY3Z4YWllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MDIzNTgsImV4cCI6MjEwMTM3ODM1OH0.YVTTUWR94KB7wm8aR6hDZyFafNJNvZmToZf2tdRFlEU'
 };
