@@ -202,11 +202,125 @@ body{flex-direction:column;}
 .log-row span:first-child{color:var(--muted)}
 .log-ok{color:var(--good)}
 .log-err{color:var(--bad)}
+
+/* ================= ambient field ================= */
+.ai-field{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:layout paint style}
+.ai-aurora,.ai-grid,.ai-spot{position:absolute;inset:0}
+.ai-aurora{
+background:
+radial-gradient(44vw 44vw at 16% 10%, rgba(79,124,255,.20), transparent 62%),
+radial-gradient(38vw 38vw at 84% 20%, rgba(139,92,246,.17), transparent 64%),
+radial-gradient(42vw 42vw at 64% 90%, rgba(34,211,238,.12), transparent 66%),
+radial-gradient(30vw 30vw at 6% 84%, rgba(45,212,167,.08), transparent 68%);
+filter:blur(26px);will-change:transform;
+animation:aiDrift 38s ease-in-out infinite alternate;}
+@keyframes aiDrift{
+0%{transform:translate3d(0,0,0) scale(1)}
+50%{transform:translate3d(-3.5%,2.5%,0) scale(1.09)}
+100%{transform:translate3d(2.5%,-3%,0) scale(1.04)}}
+.ai-grid{inset:-90px;
+background-image:linear-gradient(to right, rgba(130,170,255,.05) 1px, transparent 1px),linear-gradient(to bottom, rgba(130,170,255,.05) 1px, transparent 1px);
+background-size:66px 66px;
+-webkit-mask-image:radial-gradient(130% 100% at 50% -6%, #000 22%, transparent 76%);
+mask-image:radial-gradient(130% 100% at 50% -6%, #000 22%, transparent 76%);
+will-change:transform;animation:aiGridSlide 30s linear infinite;}
+@keyframes aiGridSlide{from{transform:translate3d(0,0,0)}to{transform:translate3d(66px,66px,0)}}
+.ai-spot{background:radial-gradient(520px 520px at var(--mx,50%) var(--my,28%), rgba(79,124,255,.155), rgba(139,92,246,.07) 44%, transparent 70%);opacity:0;transition:opacity .6s ease}
+.ai-spot.live{opacity:1}
+.ai-scan{position:absolute;left:0;right:0;top:-40vh;height:40vh;
+background:linear-gradient(180deg, transparent, rgba(34,211,238,.045) 44%, rgba(34,211,238,.085) 50%, rgba(34,211,238,.045) 56%, transparent);
+will-change:transform;animation:aiScan 16s linear infinite;}
+@keyframes aiScan{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,150vh,0)}}
+
+/* ================= glass chrome ================= */
+.sidebar{background:linear-gradient(180deg, rgba(13,18,32,.70), rgba(8,11,20,.86));backdrop-filter:blur(24px) saturate(130%);-webkit-backdrop-filter:blur(24px) saturate(130%);border-right:1px solid rgba(79,124,255,.16);box-shadow:1px 0 40px -14px rgba(79,124,255,.30);animation:aiFade .7s ease both}
+.brand-mark em{text-shadow:0 0 20px rgba(79,124,255,.55)}
+.brand-sub{position:relative;padding-left:12px}
+.brand-sub::before{content:"";position:absolute;left:0;top:50%;width:5px;height:5px;margin-top:-2px;border-radius:99px;background:var(--cyan);box-shadow:0 0 10px rgba(34,211,238,.95);animation:aiPulse 2.6s ease-in-out infinite}
+@keyframes aiPulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes aiFade{from{opacity:0}to{opacity:1}}
+.main{animation:aiRise .6s cubic-bezier(.22,.75,.25,1) both}
+@keyframes aiRise{from{opacity:0;transform:translate3d(0,12px,0)}to{opacity:1;transform:none}}
+/* ================= nav rail ================= */
+.nav{list-style:none;margin:0}
+.nav li{list-style:none}
+
+.nav button{position:relative;transition:background .18s ease,color .18s ease,box-shadow .25s ease,padding-left .18s ease}
+.nav button::before{content:"";position:absolute;left:2px;top:50%;width:2px;height:0;border-radius:2px;transform:translateY(-50%);background:linear-gradient(180deg,var(--accent),var(--cyan));box-shadow:0 0 12px rgba(79,124,255,.95);transition:height .28s cubic-bezier(.22,.75,.25,1);pointer-events:none}
+.nav button:hover::before{height:36%}
+.nav button:hover{padding-left:17px}
+.nav button.on::before{height:64%}
+.nav button.on{padding-left:17px;box-shadow:inset 0 0 0 1px rgba(79,124,255,.34), 0 0 26px -8px rgba(79,124,255,.60)}
+
+/* ================= card HUD ================= */
+.card{position:relative;transition:border-color .28s ease,box-shadow .28s ease}
+.card::before{content:"";position:absolute;left:16px;right:16px;top:0;height:1px;pointer-events:none;opacity:.65;background:linear-gradient(90deg,transparent,rgba(79,124,255,.55) 22%,rgba(34,211,238,.45) 62%,transparent)}
+.card::after{content:"";position:absolute;top:9px;right:9px;width:13px;height:13px;pointer-events:none;opacity:.5;border-top:1px solid rgba(79,124,255,.5);border-right:1px solid rgba(79,124,255,.5);border-top-right-radius:7px;transition:opacity .28s ease}
+.card:hover{border-color:rgba(79,124,255,.26);box-shadow:0 1px 0 rgba(255,255,255,.045) inset, 0 24px 48px -26px rgba(0,0,0,.72), 0 0 42px -18px rgba(79,124,255,.42)}
+.card:hover::after{opacity:.95}
+
+/* ================= topbar data bus ================= */
+.topbar{position:relative;padding-bottom:15px}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(79,124,255,.45),rgba(139,92,246,.38),rgba(34,211,238,.32),transparent);background-size:220% 100%;animation:aiFlow 11s linear infinite}
+@keyframes aiFlow{from{background-position:0 0}to{background-position:220% 0}}
+.eyebrow{color:var(--cyan);opacity:.85}
+.weather{border-color:rgba(79,124,255,.22);box-shadow:0 0 24px -12px rgba(79,124,255,.55)}
+
+/* ================= luminous data ================= */
+.readout,.kpi .num{text-shadow:0 0 26px rgba(79,124,255,.30)}
+.kpi{position:relative;transition:border-color .28s ease,box-shadow .28s ease}
+.kpi:hover{border-color:rgba(79,124,255,.30);box-shadow:0 0 34px -16px rgba(79,124,255,.55)}
+::selection{background:rgba(79,124,255,.38);color:#fff}
+:focus-visible{outline:2px solid rgba(34,211,238,.7);outline-offset:2px}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-thumb{background:rgba(130,170,255,.17);border-radius:6px}
+*::-webkit-scrollbar-thumb:hover{background:rgba(130,170,255,.30)}
+*::-webkit-scrollbar-track{background:transparent}
+
+/* ================= view entry stagger ================= */
+.view.on > *{animation:aiRise .5s cubic-bezier(.22,.75,.25,1) both}
+.view.on > *:nth-child(1){animation-delay:.02s}
+.view.on > *:nth-child(2){animation-delay:.07s}
+.view.on > *:nth-child(3){animation-delay:.12s}
+.view.on > *:nth-child(4){animation-delay:.17s}
+.view.on > *:nth-child(5){animation-delay:.21s}
+.view.on > *:nth-child(n+6){animation-delay:.25s}
+
+/* ================= sign in ================= */
+.auth-gate{background:radial-gradient(900px 600px at 70% -10%, rgba(79,124,255,.20), transparent 60%), rgba(8,11,20,.80)}
+.auth-card{position:relative;box-shadow:0 0 0 1px rgba(79,124,255,.10), 0 44px 90px -40px rgba(0,0,0,.9), 0 0 70px -22px rgba(79,124,255,.40)}
+.auth-brand{text-shadow:0 0 26px rgba(79,124,255,.55)}
+@property --aiAngle{syntax:"<angle>";inherits:false;initial-value:0deg}
+@supports ((-webkit-mask-composite:xor) or (mask-composite:exclude)){
+.auth-card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;
+background:conic-gradient(from var(--aiAngle),transparent 0deg,rgba(79,124,255,.85) 45deg,rgba(139,92,246,.65) 95deg,rgba(34,211,238,.5) 145deg,transparent 205deg);
+-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+animation:aiOrbit 9s linear infinite}
+@keyframes aiOrbit{to{--aiAngle:360deg}}
+}
+
+/* ================= system sweep + title ================= */
+.ai-topline{position:fixed;left:0;right:0;top:0;height:2px;z-index:60;pointer-events:none;
+background:linear-gradient(90deg,transparent,rgba(79,124,255,.85),rgba(139,92,246,.70),rgba(34,211,238,.60),transparent);
+background-size:55% 100%;background-repeat:no-repeat;animation:aiSweep 8s ease-in-out infinite}
+@keyframes aiSweep{0%{background-position:-55% 0}100%{background-position:165% 0}}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+#viewTitle{background:linear-gradient(94deg,#ffffff 0%,#e4ebff 40%,#a9c2ff 82%);-webkit-background-clip:text;background-clip:text;color:transparent}
+}
 </style>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<div class="ai-field" aria-hidden="true">
+<div class="ai-aurora"></div>
+<div class="ai-grid"></div>
+<div class="ai-scan"></div>
+<div class="ai-spot" id="aiSpot"></div>
+</div>
+<div class="ai-topline" aria-hidden="true"></div>
+
 <div class="auth-gate" id="authGate" style="display:none">
 <div class="auth-card">
 <div class="auth-brand">Field<em>Flow</em></div>
@@ -453,7 +567,7 @@ body{flex-direction:column;}
 </div>
 <div class="card">
 <p class="card-title">How this works</p>
-<p class="note" style="margin:0;">Posts move through Idea → Drafted → Scheduled → Posted as you click each card. Nothing here publishes automatically to any platform.</p>
+<p class="note" style="margin:0;">Posts move through Idea → Drafted → Scheduled → Posted as you click each card. Nothing goes out on its own — a post only leaves FieldFlow when you press Share or Publish on it.</p>
 </div>
 </div>
 <div class="board" id="postBoard"></div>
@@ -2332,6 +2446,25 @@ if($("shareModal")) $("shareModal").addEventListener("click", function(e){ if(e.
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape" && $("shareModal") && $("shareModal").classList.contains("on")) closeShare();
 });
+function aiAmbientInit(){
+  var spot = $("aiSpot");
+  if(!spot) return;
+  if(window.matchMedia){
+    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if(window.matchMedia("(hover: none)").matches) return;
+  }
+  var last = 0;
+  window.addEventListener("mousemove", function(e){
+    if(!spot.classList.contains("live")) spot.classList.add("live");
+    var now = e.timeStamp || Date.now();
+    if(now - last < 16) return;
+    last = now;
+    spot.style.setProperty("--mx", e.clientX + "px");
+    spot.style.setProperty("--my", e.clientY + "px");
+  }, {passive: true});
+  document.addEventListener("mouseleave", function(){ spot.classList.remove("live"); });
+}
+aiAmbientInit();
 loadState();
 currentScheduleDate = todayISO();
 $('jDate').value = todayISO();
