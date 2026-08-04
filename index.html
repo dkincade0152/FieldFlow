@@ -166,6 +166,42 @@ body{flex-direction:column;}
 .sidebar{max-height:100vh;overflow-y:auto;}
 .sidebar::-webkit-scrollbar{width:8px;}
 .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px;}
+/* --- social publishing --- */
+.conn-strip{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.conn-dot{width:9px;height:9px;border-radius:99px;background:var(--muted2);box-shadow:0 0 0 3px rgba(255,255,255,.05);flex:none}
+.conn-dot.live{background:var(--good);box-shadow:0 0 0 3px rgba(45,212,167,.18)}
+.conn-dot.err{background:var(--bad);box-shadow:0 0 0 3px rgba(255,93,114,.18)}
+.conn-txt{font-size:13px;color:var(--muted)}
+.conn-txt b{color:var(--ink);font-weight:600}
+.mini{font-size:11px;padding:4px 8px}
+.post-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.send-tag{display:inline-block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle}
+.send-tag.ok{background:rgba(45,212,167,.14);color:var(--good)}
+.send-tag.err{background:rgba(255,93,114,.14);color:var(--bad)}
+.send-tag.busy{background:rgba(79,124,255,.16);color:var(--accent)}
+/* --- modal --- */
+.modal{position:fixed;inset:0;z-index:70;display:none;align-items:flex-start;justify-content:center;padding:40px 20px;background:rgba(4,6,12,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto}
+.modal.on{display:flex}
+.modal-card{width:100%;max-width:520px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03)),var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:24px 26px;box-shadow:0 40px 90px -30px rgba(0,0,0,.85)}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:4px}
+.modal-head h3{font-family:'Space Grotesk',sans-serif;font-size:18px;margin:0}
+.modal-x{background:none;border:0;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
+.modal-x:hover{color:var(--ink);background:var(--surface2)}
+.modal-cap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;line-height:1.5;color:var(--muted);white-space:pre-wrap;max-height:180px;overflow-y:auto;margin:14px 0 18px}
+.modal-cap::-webkit-scrollbar,.modal::-webkit-scrollbar{width:8px}
+.modal-cap::-webkit-scrollbar-thumb,.modal::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+.modal-cap::-webkit-scrollbar-track,.modal::-webkit-scrollbar-track{background:transparent}
+.share-list{display:grid;gap:8px}
+.share-btn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);color:var(--ink);border-radius:var(--radius-sm);padding:12px 14px;font:inherit;font-size:14px;cursor:pointer;transition:border-color .15s,background .15s}
+.share-btn:hover{background:var(--surface2);border-color:var(--border2)}
+.share-btn i{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700;color:#fff;background:var(--accent)}
+.share-btn small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:2px}
+.share-btn.primary{border-color:rgba(79,124,255,.5);background:rgba(79,124,255,.12)}
+.log-row{display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.log-row:last-child{border-bottom:0}
+.log-row span:first-child{color:var(--muted)}
+.log-ok{color:var(--good)}
+.log-err{color:var(--bad)}
 </style>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -204,6 +240,7 @@ body{flex-direction:column;}
 <li><button data-view="invoicing">Invoicing</button></li>
 <li><button data-view="tools">Tools</button></li>
 <li><button data-view="import">Import</button></li>
+<li><button data-view="settings">Settings</button></li>
 </ul>
 <div class="sidebar-foot" id="sideStats">
 <button class="ghost" id="resetData" style="margin-top:10px;width:100%;border-color:var(--border2);color:var(--muted2)">Reset all data</button>
@@ -400,7 +437,10 @@ body{flex-direction:column;}
 <p class="card-title" style="margin:0 0 4px;">Posts in progress</p>
 <p style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="postTotal">0</p>
 </div>
-<p class="note" style="margin:0;max-width:360px;">Click a post to move it to the next stage. This is a planner, not an auto-poster — use Copy to grab the caption text, then paste and publish it on the platform yourself.</p>
+<div style="max-width:380px;">
+<div class="conn-strip" style="margin-bottom:7px;"><span class="conn-dot" id="mktDot"></span><span class="conn-txt" id="mktStatus">Not connected</span></div>
+<p class="note" style="margin:0;">Click a card to move it a stage. <b>Share</b> opens the platform with your caption already loaded. <b>Publish</b> sends it straight out through the automation you connect in Settings.</p>
+</div>
 </div>
 </div>
 <div class="grid two" style="margin-bottom:14px;">
@@ -459,6 +499,66 @@ body{flex-direction:column;}
 </div>
 </section>
 
+<section class="view" id="view-settings">
+<div class="card" style="margin-bottom:14px;">
+<div class="conn-strip">
+<span class="conn-dot" id="setDot"></span>
+<span class="conn-txt" id="setStatus">Not connected</span>
+</div>
+</div>
+<div class="grid two" style="margin-bottom:14px;">
+<div class="card">
+<p class="card-title">Connect social media</p>
+<p class="note" style="margin:-6px 0 14px;">FieldFlow hands your post off to an automation service you control, and that service publishes it. Make a free Zapier, Make or n8n account, create a webhook trigger, connect your Facebook, Instagram, LinkedIn or Google Business account inside it, then paste the webhook URL here.</p>
+<div class="field"><label for="setHookName">What is it called</label><input type="text" id="setHookName" placeholder="Zapier - post to Facebook and Instagram"></div>
+<div class="field"><label for="setHook">Webhook URL</label><input type="text" id="setHook" placeholder="https://hooks.zapier.com/hooks/catch/..."></div>
+<div class="field"><label for="setLink">Website or booking link</label><input type="text" id="setLink" placeholder="https://yourcompany.com"></div>
+<div class="field"><label for="setHashtags">Default hashtags</label><input type="text" id="setHashtags" placeholder="#landscaping #curbappeal #yourtown"></div>
+<div class="field"><label for="setSignature">Signature line</label><input type="text" id="setSignature" placeholder="Free estimates - call 555-0100"></div>
+<div class="row-actions" style="margin-top:4px;">
+<button class="act" id="saveSocialBtn">Save connection</button>
+<button class="ghost" id="testSocialBtn">Send test</button>
+<button class="ghost" id="clearSocialBtn">Disconnect</button>
+</div>
+<p class="note" id="setMsg"></p>
+</div>
+<div class="card">
+<p class="card-title">What gets sent</p>
+<p class="note" style="margin:-6px 0 12px;">Every publish sends one JSON object. Map these fields inside your automation.</p>
+<table><thead><tr><th>Field</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>platform</td><td>Instagram, Facebook, X and so on</td></tr>
+<tr><td>caption</td><td>Your post copy</td></tr>
+<tr><td>hashtags</td><td>The default hashtag line</td></tr>
+<tr><td>signature</td><td>The signature line</td></tr>
+<tr><td>full_text</td><td>Caption, signature and hashtags joined together</td></tr>
+<tr><td>scheduled_date</td><td>The date on the post card</td></tr>
+<tr><td>link</td><td>Your website or booking link</td></tr>
+<tr><td>business</td><td>Your business name</td></tr>
+<tr><td>post_id</td><td>The FieldFlow id, so you can dedupe</td></tr>
+<tr><td>sent_at</td><td>Timestamp of the handoff</td></tr>
+<tr><td>source</td><td>Always the text FieldFlow</td></tr>
+</tbody></table>
+<p class="note" style="margin-top:14px;">Nothing else leaves FieldFlow. Client lists, jobs and invoices are never included.</p>
+</div>
+</div>
+<div class="grid two" style="margin-bottom:14px;">
+<div class="card">
+<p class="card-title">Business name for posts</p>
+<div class="field"><label for="setBizName">Business name</label><input type="text" id="setBizName" placeholder="Your company"></div>
+<button class="ghost" id="saveBizBtn">Save name</button>
+<p class="note" id="bizMsg"></p>
+</div>
+<div class="card">
+<p class="card-title">Delivery log</p>
+<div id="setLog"></div>
+<button class="ghost mini" id="clearLogBtn" style="margin-top:12px;">Clear log</button>
+</div>
+</div>
+<div class="card">
+<p class="card-title">Direct platform logins, honestly</p>
+<p class="note" style="margin:-6px 0 0;">Posting straight to Instagram or Facebook from FieldFlow with no middleman means registering FieldFlow as an app with Meta, LinkedIn and X, storing secret keys on a server, and passing each platform review before they will let an app publish on your behalf. Meta review alone runs weeks and X charges for posting access. The webhook route above gets you the same result today, and the automation service handles every one of those approvals for you.</p>
+</div>
+</section>
 <section class="view" id="view-tools">
 <div class="grid tools-grid">
 <div class="card">
@@ -546,10 +646,22 @@ body{flex-direction:column;}
 </section>
 
 </main>
+<div class="modal" id="shareModal">
+<div class="modal-card">
+<div class="modal-head">
+<div><h3 id="shareTitle">Publish this post</h3><p class="note" style="margin:4px 0 0;" id="shareSub"></p></div>
+<button class="modal-x" onclick="closeShare()" aria-label="Close">×</button>
+</div>
+<div class="modal-cap" id="shareCap"></div>
+<div class="share-list" id="shareList"></div>
+<p class="note" id="shareMsg" style="margin-bottom:0;"></p>
+</div>
+</div>
 <datalist id="clientNames"></datalist>
 <script>
 var state = {
   seq: 1,
+  social: {hook:'', hookName:'', hashtags:'', signature:'', link:'', bizName:'', log:[]},
   clients: [],
   jobs: [],
   crews: [],
@@ -644,7 +756,8 @@ var TITLES = {
   crews: ['Operations','Crews'],
   invoicing: ['Accounts','Invoicing'],
   tools: ['Field math','Tools'],
-  import: ['Data','Import Center']
+  import: ['Data','Import Center'],
+  settings: ['Setup','Settings & Publishing']
 };
 
 $('nav').addEventListener('click', function(e){
@@ -1415,9 +1528,13 @@ function renderPostBoard(){
       var preview = capText.length>70 ? capText.slice(0,70)+'...' : capText;
       return '<div class="lead" tabindex="0" onclick="advancePost('+p.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();advancePost('+p.id+');}">'+
         '<button class="del" onclick="event.stopPropagation();deletePost('+p.id+')">'+String.fromCharCode(215)+'</button>'+
-        '<h4>'+esc(p.platform)+'</h4><div class="src">'+(p.date?fmtDate(p.date):'No date set')+'</div>'+
+        '<h4>'+esc(p.platform)+sendTagHtml(p)+'</h4><div class="src">'+(p.date?fmtDate(p.date):'No date set')+'</div>'+
         '<div style="font-size:12px;color:var(--muted);margin:6px 0;line-height:1.4;">'+preview+'</div>'+
-        '<button class="ghost" style="font-size:11px;padding:4px 8px;" onclick="event.stopPropagation();copyCaption('+p.id+')">Copy caption</button></div>';
+        '<div class="post-acts">'+
+        '<button class="ghost mini" onclick="event.stopPropagation();copyCaption('+p.id+')">Copy</button>'+
+        '<button class="ghost mini" onclick="event.stopPropagation();openShare('+p.id+')">Share</button>'+
+        '<button class="ghost mini" onclick="event.stopPropagation();publishPost('+p.id+')">Publish</button>'+
+        '</div></div>';
     }).join('') : '<div class="col-empty">Nothing here</div>';
     return '<div><div class="col-head"><h3>'+esc(status)+'</h3><span class="col-sum">'+inStage.length+'</span></div>'+cards+'</div>';
   }).join('');
@@ -1461,6 +1578,7 @@ function renderAll(){
   calcOverhead();
   calcPricer();
   calcEstVsActual();
+  renderSettings();
   renderSideStats();
 }
 
@@ -1892,6 +2010,328 @@ function ffAuthInit(){
   }, function(){ ffMsg('Could not reach the sign-in service. Check your connection and try again.', true); });
 }
 
+function socialCfg(){
+  if(!state.social) state.social = {hook:"", hookName:"", hashtags:"", signature:"", link:"", bizName:"", log:[]};
+  if(!state.social.log) state.social.log = [];
+  return state.social;
+}
+function postFullText(p){
+  var c = socialCfg();
+  var out = (p.caption || "").trim();
+  if(c.signature) out += "\n\n" + c.signature;
+  if(c.hashtags) out += "\n\n" + c.hashtags;
+  return out;
+}
+function sendTagHtml(p){
+  if(p.sendState === "busy") return "<span class=\"send-tag busy\">Sending</span>";
+  if(p.sendState === "sent") return "<span class=\"send-tag ok\">Sent</span>";
+  if(p.sendState === "error") return "<span class=\"send-tag err\">Failed</span>";
+  return "";
+}
+function socialLog(platform, ok, msg){
+  var c = socialCfg();
+  c.log.push({t: ffTime(), d: todayISO(), platform: platform, ok: !!ok, msg: msg});
+  if(c.log.length > 25) c.log = c.log.slice(c.log.length - 25);
+}
+function socialSend(payload, done){
+  var c = socialCfg();
+  if(!c.hook){ done(false, "No webhook URL saved yet. Add one in Settings."); return; }
+  var body = JSON.stringify(payload);
+  var finished = false;
+  var guard = setTimeout(function(){ finish(false, "No answer in 20 seconds. Check your automation history."); }, 20000);
+  function finish(ok, msg){ if(finished) return; finished = true; clearTimeout(guard); done(ok, msg); }
+  fetch(c.hook, {method: "POST", headers: {"Content-Type": "application/json"}, body: body}).then(function(res){
+    if(res.ok) finish(true, "Accepted by your automation.");
+    else finish(false, "Your automation answered with status " + res.status + ".");
+  }, function(){
+    fetch(c.hook, {method: "POST", mode: "no-cors", headers: {"Content-Type": "text/plain"}, body: body}).then(function(){
+      finish(true, "Handed off. This service does not reply to browsers, so confirm it in your automation history.");
+    }, function(err){
+      finish(false, "Could not reach that URL. " + ((err && err.message) ? err.message : "Check the address and try again."));
+    });
+  });
+}
+function publishPost(id){
+  var p = state.posts.filter(function(x){ return x.id === id; })[0];
+  if(!p) return;
+  var c = socialCfg();
+  if(!c.hook){
+    alert("No automation is connected yet. Open Settings to paste a webhook URL, or use Share to post by hand.");
+    return;
+  }
+  if(p.sendState === "busy") return;
+  p.sendState = "busy";
+  renderPostBoard();
+  var payload = {
+    platform: p.platform,
+    caption: (p.caption || "").trim(),
+    hashtags: c.hashtags || "",
+    signature: c.signature || "",
+    full_text: postFullText(p),
+    link: c.link || "",
+    scheduled_date: p.date || "",
+    business: c.bizName || "",
+    post_id: p.id,
+    sent_at: new Date().toISOString(),
+    source: "FieldFlow"
+  };
+  socialSend(payload, function(ok, msg){
+    p.sendState = ok ? "sent" : "error";
+    p.sendMsg = msg;
+    if(ok){
+      p.sentAt = new Date().toISOString();
+      if(p.status < POST_STATUSES.length - 1) p.status = POST_STATUSES.length - 1;
+    }
+    socialLog(p.platform, ok, msg);
+    renderAll();
+    saveState();
+    if(!ok) alert("That post did not go through. " + msg);
+  });
+}
+function copyText(text, okMsg){
+  if(!navigator.clipboard || !navigator.clipboard.writeText){
+    alert("This browser will not let FieldFlow copy for you. Select the caption and copy it by hand.");
+    return;
+  }
+  navigator.clipboard.writeText(text).then(function(){
+    if($("shareMsg") && $("shareModal").classList.contains("on")) $("shareMsg").textContent = okMsg;
+    else alert(okMsg);
+  }, function(){
+    alert("Copy did not work. Select the caption and copy it by hand.");
+  });
+}
+function icsEsc(s){
+  s = String(s || "");
+  var bs = String.fromCharCode(92);
+  s = s.split(bs).join(bs + bs);
+  s = s.split(";").join(bs + ";");
+  s = s.split(",").join(bs + ",");
+  s = s.split(String.fromCharCode(13)).join("");
+  s = s.split(String.fromCharCode(10)).join(bs + "n");
+  return s;
+}
+function downloadTextFile(name, mime, text){
+  try{
+    var blob = new Blob([text], {type: mime});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name; a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ if(a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 500);
+    return true;
+  } catch(e){ alert("Could not build that file. " + e.message); return false; }
+}
+function downloadPostIcs(id){
+  var p = state.posts.filter(function(x){ return x.id === id; })[0];
+  if(!p) return;
+  if(!p.date){ shareNote("Give this post a date first, then the reminder has somewhere to land."); return; }
+  var c = socialCfg();
+  var crlf = String.fromCharCode(13) + String.fromCharCode(10);
+  var d = p.date.split("-").join("");
+  var next = addDaysISO(p.date, 1).split("-").join("");
+  var stamp = new Date().toISOString().split("-").join("").split(":").join("").split(".")[0] + "Z";
+  var title = "Post to " + p.platform + (c.bizName ? " - " + c.bizName : "");
+  var lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//FieldFlow//Marketing//EN", "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT", "UID:fieldflow-post-" + p.id + "@fieldflow", "DTSTAMP:" + stamp,
+    "DTSTART;VALUE=DATE:" + d, "DTEND;VALUE=DATE:" + next,
+    "SUMMARY:" + icsEsc(title), "DESCRIPTION:" + icsEsc(postFullText(p)),
+    "BEGIN:VALARM", "TRIGGER:-PT60M", "ACTION:DISPLAY", "DESCRIPTION:" + icsEsc(title), "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR"];
+  if(downloadTextFile("fieldflow-post-" + p.id + ".ics", "text/calendar", lines.join(crlf))){
+    shareNote("Reminder file downloaded. Open it to drop it on your calendar.");
+  }
+}
+function shareNote(msg){ if($("shareMsg")) $("shareMsg").textContent = msg; }
+var SHARE_TARGETS = [
+  {k: "facebook", n: "Facebook", b: "f", s: "Opens the Facebook composer with your caption in it"},
+  {k: "instagram", n: "Instagram", b: "IG", s: "Copies the caption and opens Instagram"},
+  {k: "x", n: "X / Twitter", b: "X", s: "Opens the post box, caption already filled"},
+  {k: "linkedin", n: "LinkedIn", b: "in", s: "Copies the caption and opens the LinkedIn share box"},
+  {k: "gbp", n: "Google Business", b: "G", s: "Copies the caption and opens your Business Profile posts"},
+  {k: "nextdoor", n: "Nextdoor", b: "N", s: "Copies the caption and opens Nextdoor"},
+  {k: "pinterest", n: "Pinterest", b: "P", s: "Opens Pinterest with your caption as the description"}
+];
+function shareKeyFor(platform){
+  var s = String(platform || "").toLowerCase();
+  if(s.indexOf("insta") >= 0) return "instagram";
+  if(s.indexOf("face") >= 0) return "facebook";
+  if(s.indexOf("google") >= 0) return "gbp";
+  if(s.indexOf("twitter") >= 0 || s === "x" || s.indexOf("x /") >= 0) return "x";
+  if(s.indexOf("linked") >= 0) return "linkedin";
+  if(s.indexOf("next") >= 0) return "nextdoor";
+  if(s.indexOf("pin") >= 0) return "pinterest";
+  return "";
+}
+function openShare(id){
+  var p = state.posts.filter(function(x){ return x.id === id; })[0];
+  if(!p) return;
+  var c = socialCfg();
+  $("shareTitle").textContent = "Share to " + p.platform;
+  $("shareSub").textContent = (p.date ? "Planned for " + fmtDate(p.date) : "No date set") + " - " + POST_STATUSES[p.status || 0];
+  $("shareCap").textContent = postFullText(p);
+  shareNote("");
+  var own = shareKeyFor(p.platform);
+  var list = SHARE_TARGETS.slice().sort(function(a, b){
+    return (b.k === own ? 1 : 0) - (a.k === own ? 1 : 0);
+  });
+  var html = "";
+  if(navigator.share){
+    html += shareBtnHtml("native", "Phone share sheet", "@", "Hands the caption to any app on your phone, Instagram and TikTok included", id, true);
+  }
+  list.forEach(function(t){
+    html += shareBtnHtml(t.k, t.n, t.b, t.s, id, t.k === own && !navigator.share);
+  });
+  html += shareBtnHtml("copy", "Copy the whole thing", "C", "Caption, signature and hashtags as one block", id, false);
+  html += shareBtnHtml("ics", "Calendar reminder", "D", "Downloads a .ics file so your phone reminds you on the day", id, false);
+  if(c.hook){
+    html += shareBtnHtml("hook", "Publish through " + (c.hookName || "your automation"), "A", "Sends it straight out with no copy and paste", id, true);
+  }
+  $("shareList").innerHTML = html;
+  $("shareModal").classList.add("on");
+}
+function shareBtnHtml(kind, name, badge, sub, id, primary){
+  return "<button class=\"share-btn" + (primary ? " primary" : "") + "\" onclick=\"shareVia('" + kind + "'," + id + ")\">" +
+    "<i>" + esc(badge) + "</i><span>" + esc(name) + "<small>" + esc(sub) + "</small></span></button>";
+}
+function closeShare(){ if($("shareModal")) $("shareModal").classList.remove("on"); }
+function shareVia(kind, id){
+  var p = state.posts.filter(function(x){ return x.id === id; })[0];
+  if(!p) return;
+  var c = socialCfg();
+  var text = postFullText(p);
+  var link = c.link || "";
+  var enc = encodeURIComponent;
+  if(kind === "copy"){ copyText(text, "Copied. Paste it wherever you like."); return; }
+  if(kind === "ics"){ downloadPostIcs(id); return; }
+  if(kind === "hook"){ closeShare(); publishPost(id); return; }
+  if(kind === "native"){
+    if(!navigator.share){ shareNote("This browser has no share sheet. Pick a platform below."); return; }
+    var payload = {text: text};
+    if(link) payload.url = link;
+    navigator.share(payload).then(function(){ shareNote("Handed to your share sheet."); }, function(){});
+    return;
+  }
+  var url = "";
+  var copyFirst = false;
+  if(kind === "facebook"){
+    if(!link){ shareNote("Facebook needs a link to attach. Add your website in Settings first, or use Copy."); return; }
+    url = "https://www.facebook.com/sharer/sharer.php?u=" + enc(link) + "&quote=" + enc(text);
+  } else if(kind === "x"){
+    var t = text.length > 260 ? text.slice(0, 257) + "..." : text;
+    url = "https://twitter.com/intent/tweet?text=" + enc(t) + (link ? "&url=" + enc(link) : "");
+  } else if(kind === "linkedin"){
+    if(!link){ shareNote("LinkedIn needs a link to attach. Add your website in Settings first, or use Copy."); return; }
+    copyFirst = true;
+    url = "https://www.linkedin.com/sharing/share-offsite/?url=" + enc(link);
+  } else if(kind === "pinterest"){
+    if(!link){ shareNote("Pinterest needs a link to pin. Add your website in Settings first."); return; }
+    url = "https://pinterest.com/pin/create/button/?url=" + enc(link) + "&description=" + enc(text.slice(0, 480));
+  } else if(kind === "instagram"){
+    copyFirst = true; url = "https://www.instagram.com/";
+  } else if(kind === "gbp"){
+    copyFirst = true; url = "https://business.google.com/posts";
+  } else if(kind === "nextdoor"){
+    copyFirst = true; url = "https://nextdoor.com/news_feed/";
+  } else { return; }
+  if(copyFirst && navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){}, function(){});
+  }
+  window.open(url, "_blank");
+  shareNote(copyFirst ? "Caption copied and the site opened in a new tab. Paste it there." : "Composer opened in a new tab with your caption already in it.");
+}
+var SOCIAL_FIELDS = ["setHook", "setHookName", "setHashtags", "setSignature", "setLink", "setBizName"];
+function renderSocialLog(){
+  if(!$("setLog")) return;
+  var c = socialCfg();
+  if(!c.log.length){ $("setLog").innerHTML = "<p class=\"note\" style=\"margin:0;\">Nothing sent yet.</p>"; return; }
+  $("setLog").innerHTML = c.log.slice().reverse().map(function(e){
+    return "<div class=\"log-row\"><span>" + esc(fmtDate(e.d)) + " " + esc(e.t || "") + " - " + esc(e.platform || "") +
+      "</span><span class=\"" + (e.ok ? "log-ok" : "log-err") + "\">" + (e.ok ? "Sent" : "Failed") + "</span></div>";
+  }).join("");
+}
+function renderSettings(){
+  var c = socialCfg();
+  if($("setHook")){
+    var a = document.activeElement;
+    var typing = a && a.id && SOCIAL_FIELDS.indexOf(a.id) >= 0;
+    if(!typing){
+      $("setHook").value = c.hook || "";
+      $("setHookName").value = c.hookName || "";
+      $("setHashtags").value = c.hashtags || "";
+      $("setSignature").value = c.signature || "";
+      $("setLink").value = c.link || "";
+      $("setBizName").value = c.bizName || "";
+    }
+    renderSocialLog();
+  }
+  var last = c.log.length ? c.log[c.log.length - 1] : null;
+  var cls = "conn-dot";
+  var txt = "No automation connected. Posts are copy and paste for now.";
+  if(c.hook){
+    var who = esc(c.hookName || "your automation");
+    if(last && !last.ok){ cls = "conn-dot err"; txt = "Connected to <b>" + who + "</b> - the last handoff failed"; }
+    else { cls = "conn-dot live"; txt = "Connected to <b>" + who + "</b>" + (last ? " - last sent " + esc(fmtDate(last.d)) + " " + esc(last.t || "") : " - nothing sent yet"); }
+  }
+  if($("setDot")){ $("setDot").className = cls; $("setStatus").innerHTML = txt; }
+  if($("mktDot")){ $("mktDot").className = cls; $("mktStatus").innerHTML = txt; }
+}
+function saveSocialCfg(){
+  var c = socialCfg();
+  var hook = $("setHook").value.trim();
+  if(hook && hook.slice(0, 8) !== "https://"){
+    $("setMsg").textContent = "That webhook address has to start with https:// so your post is not sent in the clear.";
+    return;
+  }
+  c.hook = hook;
+  c.hookName = $("setHookName").value.trim();
+  c.hashtags = $("setHashtags").value.trim();
+  c.signature = $("setSignature").value.trim();
+  c.link = $("setLink").value.trim();
+  c.bizName = $("setBizName").value.trim();
+  renderAll();
+  saveState();
+  $("setMsg").textContent = hook ? "Saved. Send a test to make sure it lands." : "Saved. No webhook set, so publishing is turned off.";
+}
+function testSocialHook(){
+  var c = socialCfg();
+  if(!c.hook){ $("setMsg").textContent = "Save a webhook URL first."; return; }
+  $("setMsg").textContent = "Sending a test...";
+  socialSend({
+    platform: "Test", caption: "Test post from FieldFlow. If you can see this, the connection works.",
+    hashtags: c.hashtags || "", signature: c.signature || "",
+    full_text: "Test post from FieldFlow. If you can see this, the connection works.",
+    link: c.link || "", scheduled_date: todayISO(), business: c.bizName || "",
+    post_id: 0, sent_at: new Date().toISOString(), source: "FieldFlow", test: true
+  }, function(ok, msg){
+    socialLog("Test", ok, msg);
+    renderAll();
+    saveState();
+    $("setMsg").textContent = msg;
+  });
+}
+function clearSocialCfg(){
+  if(!confirm("Disconnect the automation? Your posts and log stay, but Publish will stop working until you add a webhook again.")) return;
+  var c = socialCfg();
+  c.hook = ""; c.hookName = "";
+  renderAll();
+  saveState();
+  $("setMsg").textContent = "Disconnected.";
+}
+function clearSocialLog(){
+  socialCfg().log = [];
+  renderAll();
+  saveState();
+}
+if($("saveSocialBtn")) $("saveSocialBtn").addEventListener("click", saveSocialCfg);
+if($("testSocialBtn")) $("testSocialBtn").addEventListener("click", testSocialHook);
+if($("clearSocialBtn")) $("clearSocialBtn").addEventListener("click", clearSocialCfg);
+if($("saveBizBtn")) $("saveBizBtn").addEventListener("click", saveSocialCfg);
+if($("clearLogBtn")) $("clearLogBtn").addEventListener("click", clearSocialLog);
+if($("shareModal")) $("shareModal").addEventListener("click", function(e){ if(e.target === $("shareModal")) closeShare(); });
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape" && $("shareModal") && $("shareModal").classList.contains("on")) closeShare();
+});
 loadState();
 currentScheduleDate = todayISO();
 $('jDate').value = todayISO();
