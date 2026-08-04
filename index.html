@@ -1,135 +1,1278 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>FieldFlow — Landscaping Operations</title>
-   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-   <style>
-      :root{
-         --ink: #1C1916;
-         --paper: #E4E2DC;
-         --card: #F2F1ED;
-         --paint: #FF5A1F;
-         --bark: #4A3B2A;
-         --soil: #8C8073;
-         --moss: #5C7247;
-         --line: #C9C6BD;
-         --muted: #6E695F;
-         --radius: 3px;
-      }
-      *{box-sizing:border-box;}
-      html,body{height:100%;}
-      body{margin:0;background:var(--paper);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;display:flex;}
-      .sidebar{width:212px;flex-shrink:0;background:var(--ink);color:var(--paper);padding:24px 0;display:flex;flex-direction:column;min-height:100vh;}
-      .brand{padding:0 22px 26px;}
-      .brand-mark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.02em;text-transform:uppercase;line-height:1;}
-      .brand-mark em{color:var(--paint);font-style:normal;}
-      .brand-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8C8073;margin-top:5px;}
-      .nav{list-style:none;margin:0;padding:0;}
-      .nav button{width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;color:#B8B2A6;cursor:pointer;padding:11px 22px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:.07em;text-transform:uppercase;}
-      .nav button:hover{color:var(--paper);background:#262220;}
-      .nav button.on{color:var(--paper);border-left-color:var(--paint);background:#262220;}
-      .nav button:focus-visible{outline:2px solid var(--paint);outline-offset:-2px;}
-      .sidebar-foot{margin-top:auto;padding:20px 22px 0;border-top:1px solid #332E2A;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7A7368;line-height:1.7;}
-      .main{flex:1;min-width:0;padding:28px 32px 60px;overflow-x:hidden;}
-      .topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
-      .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--paint);margin:0 0 4px;}
-      h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:36px;line-height:1;text-transform:uppercase;margin:0;}
-      .weather{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.7;}
-      .view{display:none;}
-      .view.on{display:block;}
-      .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
-      .card-title{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 14px;color:var(--muted);}
-      .grid{display:grid;gap:14px;}
-      .kpis{grid-template-columns:repeat(auto-fit,minmax(168px,1fr));margin-bottom:14px;}
-      .two{grid-template-columns:1.45fr 1fr;}
-      .tools-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
-      .kpi .num{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:31px;line-height:1;margin:0;}
-      .kpi .lbl{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:7px 0 0;}
-      .delta{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-left:7px;}
-      .up{color:var(--moss);} .down{color:var(--paint);}
-      .chart{width:100%;height:190px;display:block;}
-      .chart text{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--muted);}
-      .route{position:relative;padding-left:56px;}
-      .route::before{content:'';position:absolute;left:47px;top:6px;bottom:6px;width:1px;background:var(--line);}
-      .stop{position:relative;margin-bottom:10px;}
-      .stop-time{position:absolute;left:-56px;top:9px;width:42px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
-      .stop-dot{position:absolute;left:-10px;top:13px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:2px solid var(--soil);}
-      .stop.done .stop-dot{background:var(--moss);border-color:var(--moss);}
-      .stop-body{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--soil);border-radius:var(--radius);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
-      .stop.done .stop-body{border-left-color:var(--moss);opacity:.62;}
-      .stop-body h4{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;}
-      .stop.done h4{text-decoration:line-through;}
-      .stop-meta{font-size:13px;color:var(--muted);margin-top:2px;}
-      .stop-right{text-align:right;flex-shrink:0;display:flex;align-items:center;gap:8px;}
-      .stop-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;}
-      .board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-      .col-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;margin-bottom:10px;border-bottom:2px solid var(--ink);}
-      .col-head h3{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
-      .col-sum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
-      .lead{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:11px;margin-bottom:9px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;position:relative;}
-      .lead:hover{transform:translateX(2px);border-color:var(--paint);}
-      .lead:focus-visible{outline:2px solid var(--paint);outline-offset:1px;}
-      .lead h4{margin:0 0 3px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;padding-right:18px;}
-      .lead .src{font-size:12px;color:var(--muted);}
-      .lead .amt{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;display:block;margin-top:6px;}
-      .lead .del{position:absolute;top:8px;right:9px;background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;}
-      .lead .del:hover{color:var(--paint);}
-      .col-empty{border:1px dashed var(--line);border-radius:var(--radius);padding:16px 11px;font-size:13px;color:var(--muted);text-align:center;}
-      label{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:.07em;text-transform:uppercase;margin:0 0 5px;color:var(--muted);}
-      input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:14px;}
-      input:focus,select:focus,textarea:focus{outline:2px solid var(--paint);outline-offset:1px;}
-      .field{margin-bottom:13px;}
-      .inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-      .inline3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-      button.act{background:var(--paint);color:#fff;border:0;border-radius:var(--radius);padding:10px 16px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;}
-      button.act:hover{background:#E64A12;}
-      button.act:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
-      button.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:var(--radius);padding:5px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
-      button.ghost:hover{border-color:var(--paint);color:var(--paint);}
-      table{width:100%;border-collapse:collapse;}
-      th{text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 0 7px;border-bottom:1px solid var(--line);font-weight:600;}
-      td{padding:9px 6px 9px 0;border-bottom:1px solid var(--line);font-size:14px;}
-      td.n,th.n{text-align:right;font-family:'IBM Plex Mono',monospace;}
-      tr:last-child td{border-bottom:0;}
-      .totals{border-top:2px solid var(--ink);margin-top:14px;padding-top:12px;}
-      .trow{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;}
-      .trow span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:500;}
-      .trow.grand{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:10px;margin-top:6px;border-top:1px solid var(--line);}
-      .trow.grand span:last-child{font-family:'IBM Plex Mono',monospace;font-size:22px;}
-      .empty{color:var(--muted);font-size:14px;padding:14px 0;}
-      .note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;}
-      .readout{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;margin:14px 0 0;}
-      .readout small{display:block;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
-      .util{margin-bottom:13px;}
-      .util-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
-      .util-top b{font-family:'Barlow Condensed',sans-serif;font-size:15px;text-transform:uppercase;letter-spacing:.03em;}
-      .util-top span{font-family:'IBM Plex Mono',monospace;color:var(--muted);}
-      .bar{height:7px;background:#D6D3CB;border-radius:99px;overflow:hidden;}
-      .bar i{display:block;height:100%;background:var(--moss);}
-      .bar i.hot{background:var(--paint);}
-      .row-actions{display:flex;gap:6px;justify-content:flex-end;}
-      .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
-      .tag.paid{background:rgba(92,114,71,.16);color:var(--moss);}
-      .tag.overdue{background:rgba(255,90,31,.16);color:var(--paint);}
-      .tag.unpaid{background:rgba(140,128,115,.2);color:var(--soil);}
-      .dateNav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-      .dateNav b{font-family:'Barlow Condensed',sans-serif;font-size:18px;text-transform:uppercase;}
-      .section-sub{color:var(--muted);font-size:13px;margin:-8px 0 16px;}
-      @media (max-width:900px){
-         .two,.board{grid-template-columns:1fr;}
-         body{flex-direction:column;}
-         .sidebar{width:100%;min-height:0;flex-direction:column;padding:16px 0 0;}
-         .nav{display:flex;overflow-x:auto;}
-         .nav button{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;padding:10px 16px;}
-         .nav button.on{border-left:0;border-bottom-color:var(--paint);}
-         .sidebar-foot{display:none;}
-         .main{padding:20px 16px 40px;}
-      }
-      @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
-      </style>
-   </head>
-   <body></body>
-   </style></title>
-   </head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FieldFlow — Landscaping Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+--ink: #1C1916;
+--paper: #E4E2DC;
+--card: #F2F1ED;
+--paint: #FF5A1F;
+--bark: #4A3B2A;
+--soil: #8C8073;
+--moss: #5C7247;
+--line: #C9C6BD;
+--muted: #6E695F;
+--radius: 3px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;display:flex;}
+.sidebar{width:212px;flex-shrink:0;background:var(--ink);color:var(--paper);padding:24px 0;display:flex;flex-direction:column;min-height:100vh;}
+.brand{padding:0 22px 26px;}
+.brand-mark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.02em;text-transform:uppercase;line-height:1;}
+.brand-mark em{color:var(--paint);font-style:normal;}
+.brand-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8C8073;margin-top:5px;}
+.nav{list-style:none;margin:0;padding:0;}
+.nav button{width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;color:#B8B2A6;cursor:pointer;padding:11px 22px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:.07em;text-transform:uppercase;}
+.nav button:hover{color:var(--paper);background:#262220;}
+.nav button.on{color:var(--paper);border-left-color:var(--paint);background:#262220;}
+.nav button:focus-visible{outline:2px solid var(--paint);outline-offset:-2px;}
+.sidebar-foot{margin-top:auto;padding:20px 22px 0;border-top:1px solid #332E2A;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7A7368;line-height:1.7;}
+.main{flex:1;min-width:0;padding:28px 32px 60px;overflow-x:hidden;}
+.topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--paint);margin:0 0 4px;}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:36px;line-height:1;text-transform:uppercase;margin:0;}
+.weather{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.7;}
+.view{display:none;}
+.view.on{display:block;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+.card-title{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 14px;color:var(--muted);}
+.grid{display:grid;gap:14px;}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(168px,1fr));margin-bottom:14px;}
+.two{grid-template-columns:1.45fr 1fr;}
+.tools-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+.kpi .num{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:31px;line-height:1;margin:0;}
+.kpi .lbl{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:7px 0 0;}
+.delta{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-left:7px;}
+.up{color:var(--moss);} .down{color:var(--paint);}
+.chart{width:100%;height:190px;display:block;}
+.chart text{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--muted);}
+.route{position:relative;padding-left:56px;}
+.route::before{content:'';position:absolute;left:47px;top:6px;bottom:6px;width:1px;background:var(--line);}
+.stop{position:relative;margin-bottom:10px;}
+.stop-time{position:absolute;left:-56px;top:9px;width:42px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+.stop-dot{position:absolute;left:-10px;top:13px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:2px solid var(--soil);}
+.stop.done .stop-dot{background:var(--moss);border-color:var(--moss);}
+.stop-body{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--soil);border-radius:var(--radius);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.stop.done .stop-body{border-left-color:var(--moss);opacity:.62;}
+.stop-body h4{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;}
+.stop.done h4{text-decoration:line-through;}
+.stop-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+.stop-right{text-align:right;flex-shrink:0;display:flex;align-items:center;gap:8px;}
+.stop-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.col-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;margin-bottom:10px;border-bottom:2px solid var(--ink);}
+.col-head h3{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
+.col-sum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+.lead{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:11px;margin-bottom:9px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;position:relative;}
+.lead:hover{transform:translateX(2px);border-color:var(--paint);}
+.lead:focus-visible{outline:2px solid var(--paint);outline-offset:1px;}
+.lead h4{margin:0 0 3px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;padding-right:18px;}
+.lead .src{font-size:12px;color:var(--muted);}
+.lead .amt{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;display:block;margin-top:6px;}
+.lead .del{position:absolute;top:8px;right:9px;background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;}
+.lead .del:hover{color:var(--paint);}
+.col-empty{border:1px dashed var(--line);border-radius:var(--radius);padding:16px 11px;font-size:13px;color:var(--muted);text-align:center;}
+label{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:.07em;text-transform:uppercase;margin:0 0 5px;color:var(--muted);}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:14px;}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--paint);outline-offset:1px;}
+.field{margin-bottom:13px;}
+.inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.inline3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+button.act{background:var(--paint);color:#fff;border:0;border-radius:var(--radius);padding:10px 16px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;}
+button.act:hover{background:#E64A12;}
+button.act:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+button.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:var(--radius);padding:5px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
+button.ghost:hover{border-color:var(--paint);color:var(--paint);}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 0 7px;border-bottom:1px solid var(--line);font-weight:600;}
+td{padding:9px 6px 9px 0;border-bottom:1px solid var(--line);font-size:14px;}
+td.n,th.n{text-align:right;font-family:'IBM Plex Mono',monospace;}
+tr:last-child td{border-bottom:0;}
+.totals{border-top:2px solid var(--ink);margin-top:14px;padding-top:12px;}
+.trow{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;}
+.trow span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.trow.grand{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:10px;margin-top:6px;border-top:1px solid var(--line);}
+.trow.grand span:last-child{font-family:'IBM Plex Mono',monospace;font-size:22px;}
+.empty{color:var(--muted);font-size:14px;padding:14px 0;}
+.note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;}
+.readout{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;margin:14px 0 0;}
+.readout small{display:block;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
+.util{margin-bottom:13px;}
+.util-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
+.util-top b{font-family:'Barlow Condensed',sans-serif;font-size:15px;text-transform:uppercase;letter-spacing:.03em;}
+.util-top span{font-family:'IBM Plex Mono',monospace;color:var(--muted);}
+.bar{height:7px;background:#D6D3CB;border-radius:99px;overflow:hidden;}
+.bar i{display:block;height:100%;background:var(--moss);}
+.bar i.hot{background:var(--paint);}
+.row-actions{display:flex;gap:6px;justify-content:flex-end;}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.tag.paid{background:rgba(92,114,71,.16);color:var(--moss);}
+.tag.overdue{background:rgba(255,90,31,.16);color:var(--paint);}
+.tag.unpaid{background:rgba(140,128,115,.2);color:var(--soil);}
+.dateNav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.dateNav b{font-family:'Barlow Condensed',sans-serif;font-size:18px;text-transform:uppercase;}
+.section-sub{color:var(--muted);font-size:13px;margin:-8px 0 16px;}
+@media (max-width:900px){
+.two,.board{grid-template-columns:1fr;}
+body{flex-direction:column;}
+.sidebar{width:100%;min-height:0;flex-direction:column;padding:16px 0 0;}
+.nav{display:flex;overflow-x:auto;}
+.nav button{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;padding:10px 16px;}
+.nav button.on{border-left:0;border-bottom-color:var(--paint);}
+.sidebar-foot{display:none;}
+.main{padding:20px 16px 40px;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+<div class="brand">
+<div class="brand-mark">Field<em>Flow</em></div>
+<div class="brand-sub" id="brandSub">Ops</div>
+</div>
+<ul class="nav" id="nav">
+<li><button data-view="overview" class="on">Overview</button></li>
+<li><button data-view="schedule">Schedule</button></li>
+<li><button data-view="clients">Clients</button></li>
+<li><button data-view="estimates">Estimates</button></li>
+<li><button data-view="pipeline">Pipeline</button></li>
+<li><button data-view="crews">Crews</button></li>
+<li><button data-view="invoicing">Invoicing</button></li>
+<li><button data-view="tools">Tools</button></li>
+</ul>
+<div class="sidebar-foot" id="sideStats">
+<button class="ghost" id="resetData" style="margin-top:10px;width:100%;border-color:#4A443C;color:#8C8073;">Reset all data</button>
+</div>
+</aside>
+
+<main class="main">
+
+<div class="topbar">
+<div>
+<p class="eyebrow" id="crumb">Dashboard</p>
+<h1 id="viewTitle">Overview</h1>
+</div>
+<div class="weather" id="todayLabel"></div>
+</div>
+
+<section class="view on" id="view-overview">
+<div class="grid kpis" id="kpis"></div>
+<div class="grid two">
+<div class="card">
+<p class="card-title">Revenue — last 8 weeks</p>
+<svg class="chart" id="chart" viewBox="0 0 640 190" preserveAspectRatio="none" role="img" aria-label="Weekly revenue bar chart"></svg>
+</div>
+<div class="card">
+<p class="card-title">Crew utilization — this week</p>
+<div id="utilList"></div>
+<p class="note">Target is 80-90%. Above that you are burning overtime; below it you are paying for idle trucks. Add crews in the Crews tab to see this fill in.</p>
+</div>
+</div>
+<div class="grid two" style="margin-top:14px;">
+<div class="card">
+<p class="card-title">Revenue by service category — MTD</p>
+<table><thead><tr><th>Category</th><th class="n">Jobs</th><th class="n">Revenue</th></tr></thead><tbody id="serviceRows"></tbody></table>
+</div>
+<div class="card">
+<p class="card-title">Needs attention</p>
+<table><tbody id="alertRows"></tbody></table>
+</div>
+</div>
+</section>
+
+<section class="view" id="view-schedule">
+<div class="card" style="margin-bottom:14px;">
+<p class="card-title">Add a job</p>
+<div class="inline3">
+<div class="field"><label for="jClient">Client</label><input list="clientNames" id="jClient" placeholder="Client name"></div>
+<div class="field"><label for="jCategory">Category</label><select id="jCategory"></select></div>
+<div class="field"><label for="jCrew">Crew</label><select id="jCrew"></select></div>
+</div>
+<div class="field"><label for="jType">Job description</label><input type="text" id="jType" placeholder="e.g. Mulch install, 14 yd"></div>
+<div class="field"><label for="jAddr">Address</label><input type="text" id="jAddr" placeholder="Job site address"></div>
+<div class="inline3">
+<div class="field"><label for="jDate">Date</label><input type="date" id="jDate"></div>
+<div class="field"><label for="jStart">Start time</label><input type="time" id="jStart"></div>
+<div class="field"><label for="jHours">Hours</label><input type="number" id="jHours" min="0" step="0.5" placeholder="0"></div>
+</div>
+<div class="field"><label for="jValue">Job value ($)</label><input type="number" id="jValue" min="0" step="10" placeholder="0"></div>
+<button class="act" id="addJob">Add job</button>
+</div>
+<div class="grid two">
+<div>
+<div class="card" style="margin-bottom:14px;">
+<div class="dateNav">
+<button class="ghost" id="prevDay">&lsaquo; Prev</button>
+<b id="routeDateLabel"></b>
+<button class="ghost" id="todayBtn">Today</button>
+<button class="ghost" id="nextDay">Next &rsaquo;</button>
+</div>
+<div class="route" id="route"></div>
+</div>
+</div>
+<div>
+<div class="card" style="margin-bottom:14px;">
+<p class="card-title">Day totals</p>
+<p class="readout" id="dayBooked">$0<small>Booked this day</small></p>
+<p class="readout" id="dayDone">$0<small>Completed</small></p>
+<p class="readout" id="dayHours">0.0 h<small>Field hours scheduled</small></p>
+<p class="note">Click Complete to mark a stop done. Completed work rolls into revenue on the Overview tab.</p>
+</div>
+<div class="card">
+<p class="card-title">Unassigned jobs</p>
+<table><tbody id="unassigned"></tbody></table>
+</div>
+</div>
+</div>
+</section>
+
+<section class="view" id="view-clients">
+<div class="grid two">
+<div class="card">
+<p class="card-title" id="clientFormTitle">Add a client</p>
+<div class="field"><label for="cName">Name</label><input type="text" id="cName" placeholder="Client or property name"></div>
+<div class="field"><label for="cAddr">Address</label><input type="text" id="cAddr" placeholder="Street address"></div>
+<div class="inline">
+<div class="field"><label for="cPhone">Phone</label><input type="text" id="cPhone" placeholder="(555) 555-0100"></div>
+<div class="field"><label for="cEmail">Email</label><input type="text" id="cEmail" placeholder="name@example.com"></div>
+</div>
+<div class="field"><label for="cNotes">Notes</label><input type="text" id="cNotes" placeholder="Gate code, dog on site, billing preference"></div>
+<div style="display:flex;gap:8px;">
+<button class="act" id="addClient">Save client</button>
+<button class="ghost" id="cancelClientEdit" style="display:none;">Cancel edit</button>
+</div>
+</div>
+<div class="card">
+<p class="card-title">Client directory</p>
+<table><thead><tr><th>Name</th><th>Contact</th><th class="n">Jobs</th><th class="n">Billed</th><th></th></tr></thead><tbody id="clientRows"></tbody></table>
+</div>
+</div>
+</section>
+
+<section class="view" id="view-estimates">
+<div class="grid two">
+<div class="card">
+<p class="card-title">Build a line item</p>
+<div class="field"><label for="client">Client</label><input list="clientNames" type="text" id="client" placeholder="Client name" style="font-family:'Barlow',sans-serif;"></div>
+<div class="field"><label for="material">Material</label><select id="material"></select></div>
+<div class="inline">
+<div class="field"><label for="area">Area (sq ft)</label><input type="number" id="area" min="0" step="10" placeholder="0"></div>
+<div class="field" id="depthWrap"><label for="depth">Depth (in)</label><input type="number" id="depth" value="3" min="0.5" max="12" step="0.5"></div>
+</div>
+<div class="inline">
+<div class="field"><label for="hours">Labor hours</label><input type="number" id="hours" min="0" step="0.5" placeholder="0"></div>
+<div class="field"><label for="rate">Crew rate ($/h)</label><input type="number" id="rate" min="0" step="1" placeholder="0"></div>
+</div>
+<div class="field"><label for="markup">Material markup (%)</label><input type="number" id="markup" value="25" min="0" step="5"></div>
+<p class="note" id="calcPreview"></p>
+<button class="act" id="addLine">Add to estimate</button>
+</div>
+<div class="card">
+<p class="card-title">Estimate — <span id="estClient">—</span></p>
+<table><thead><tr><th>Line</th><th class="n">Qty</th><th class="n">Total</th><th></th></tr></thead><tbody id="estRows"></tbody></table>
+<div class="totals">
+<div class="trow"><span>Materials (with markup)</span><span id="tMat">$0.00</span></div>
+<div class="trow"><span>Labor</span><span id="tLab">$0.00</span></div>
+<div class="trow"><span>Overhead recovery</span><span id="tOh">$0.00</span></div>
+<div class="trow"><span>Est. gross margin</span><span id="tMargin">—</span></div>
+<div class="trow grand"><span>Quote</span><span id="tGrand">$0.00</span></div>
+</div>
+<div style="display:flex;gap:8px;margin-top:12px;">
+<button class="act" id="saveEstimate">Save estimate</button>
+<button class="ghost" id="clearEstimate">Clear lines</button>
+</div>
+<p class="note">Overhead is pulled from the rate you set in Tools, multiplied by labor hours.</p>
+</div>
+</div>
+<div class="card" style="margin-top:14px;">
+<p class="card-title">Saved estimates</p>
+<table><thead><tr><th>Client</th><th>Date</th><th class="n">Total</th><th></th></tr></thead><tbody id="savedEstRows"></tbody></table>
+</div>
+</section>
+
+<section class="view" id="view-pipeline">
+<div class="card" style="margin-bottom:14px;">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+<div>
+<p class="card-title" style="margin:0 0 4px;">Open pipeline value</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="pipeTotal">$0</p>
+</div>
+<p class="note" style="margin:0;max-width:340px;">Click a lead to move it one stage right. Winning a lead creates a client record and books the job as revenue.</p>
+</div>
+</div>
+<div class="grid two" style="margin-bottom:14px;">
+<div class="card">
+<p class="card-title">Add a lead</p>
+<div class="inline">
+<div class="field"><label for="lName">Name</label><input type="text" id="lName" placeholder="Prospect name"></div>
+<div class="field"><label for="lSrc">Source</label><input type="text" id="lSrc" placeholder="Referral, Google, yard sign"></div>
+</div>
+<div class="field"><label for="lValue">Estimated value ($)</label><input type="number" id="lValue" min="0" step="50" placeholder="0"></div>
+<button class="act" id="addLead">Add lead</button>
+</div>
+<div class="card">
+<p class="card-title">Stale leads</p>
+<div id="staleLeads"></div>
+</div>
+</div>
+<div class="board" id="board"></div>
+</section>
+
+<section class="view" id="view-crews">
+<div class="grid two">
+<div class="card">
+<p class="card-title">Add a crew</p>
+<div class="field"><label for="crName">Crew name</label><input type="text" id="crName" placeholder="e.g. Crew A"></div>
+<div class="field"><label for="crCapacity">Weekly capacity (hours)</label><input type="number" id="crCapacity" min="0" step="5" placeholder="40"></div>
+<button class="act" id="addCrew">Add crew</button>
+</div>
+<div class="card">
+<p class="card-title">Crews</p>
+<table><thead><tr><th>Crew</th><th class="n">Capacity/wk</th><th class="n">Scheduled/wk</th><th class="n">Utilization</th><th></th></tr></thead><tbody id="crewRows"></tbody></table>
+</div>
+</div>
+</section>
+
+<section class="view" id="view-invoicing">
+<div class="grid two" style="margin-bottom:14px;">
+<div class="card">
+<p class="card-title">Create an invoice</p>
+<div class="field"><label for="invJob">Completed job</label><select id="invJob"></select></div>
+<div class="inline">
+<div class="field"><label for="invAmount">Amount ($)</label><input type="number" id="invAmount" min="0" step="10"></div>
+<div class="field"><label for="invIssue">Issue date</label><input type="date" id="invIssue"></div>
+</div>
+<div class="field"><label for="invDue">Due date</label><input type="date" id="invDue"></div>
+<button class="act" id="addInvoice">Create invoice</button>
+<p class="note" id="invHint"></p>
+</div>
+<div class="card">
+<p class="card-title">Summary</p>
+<p class="readout" id="invOutstanding">$0<small>Outstanding</small></p>
+<p class="readout" id="invOverdue">$0<small>Overdue</small></p>
+</div>
+</div>
+<div class="card">
+<p class="card-title">Invoices</p>
+<table><thead><tr><th>Client</th><th>Job</th><th class="n">Amount</th><th>Issued</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody id="invoiceRows"></tbody></table>
+</div>
+</section>
+
+<section class="view" id="view-tools">
+<div class="grid tools-grid">
+<div class="card">
+<p class="card-title">Overhead recovery rate</p>
+<div class="field"><label for="ohMonthly">Monthly overhead ($)</label><input type="number" id="ohMonthly" value="0" step="100"></div>
+<div class="field"><label for="ohCrews">Billable crew-hours / month</label><input type="number" id="ohCrews" value="0" step="10"></div>
+<p class="readout" id="ohRate">$0.00<small>Overhead per billable hour</small></p>
+<p class="note">Insurance, truck payments, phone, software, your own draw. Every billed hour has to carry a slice of it.</p>
+</div>
+<div class="card">
+<p class="card-title">Break-even hourly rate</p>
+<div class="field"><label for="beWage">Crew wage cost ($/h, loaded)</label><input type="number" id="beWage" value="0" step="1"></div>
+<div class="field"><label for="beMargin">Target net margin (%)</label><input type="number" id="beMargin" value="0" step="1"></div>
+<p class="readout" id="beRate">$0.00<small>Minimum billable rate</small></p>
+<p class="note">Loaded wage means pay plus payroll tax, comp, and benefits, usually 1.3 to 1.4 times the hourly.</p>
+</div>
+<div class="card">
+<p class="card-title">Material pricer</p>
+<div class="field"><label for="mpMaterial">Material</label><select id="mpMaterial"></select></div>
+<div class="inline">
+<div class="field"><label for="mpArea">Area (sq ft)</label><input type="number" id="mpArea" value="0" step="50"></div>
+<div class="field"><label for="mpDepth">Depth (in)</label><input type="number" id="mpDepth" value="3" step="0.5"></div>
+</div>
+<p class="readout" id="mpQty">—<small>Quantity needed</small></p>
+<p class="readout" id="mpCost" style="margin-top:12px;">—<small>Material cost at yard price</small></p>
+</div>
+<div class="card">
+<p class="card-title">Estimate vs. actual</p>
+<div class="inline">
+<div class="field"><label for="eaQuote">Quoted ($)</label><input type="number" id="eaQuote" value="0" step="50"></div>
+<div class="field"><label for="eaCost">Actual cost ($)</label><input type="number" id="eaCost" value="0" step="50"></div>
+</div>
+<div class="inline">
+<div class="field"><label for="eaEstH">Est. hours</label><input type="number" id="eaEstH" value="0" step="1"></div>
+<div class="field"><label for="eaActH">Actual hours</label><input type="number" id="eaActH" value="0" step="1"></div>
+</div>
+<p class="readout" id="eaMargin">—<small>Realized margin</small></p>
+<p class="note" id="eaVerdict"></p>
+</div>
+</div>
+<div class="card" style="margin-top:14px;">
+<p class="card-title">Material price list</p>
+<table style="margin-bottom:14px;"><thead><tr><th>Material</th><th>Mode</th><th class="n">Price</th><th></th></tr></thead><tbody id="materialRows"></tbody></table>
+<div class="inline3">
+<div class="field"><label for="mName">Name</label><input type="text" id="mName" placeholder="e.g. Playground mulch"></div>
+<div class="field"><label for="mMode">Mode</label><select id="mMode">
+<option value="volume-yd">Volume, cu yd</option>
+<option value="volume-ton">Volume, tons</option>
+<option value="area">Flat, per sq ft</option>
+<option value="rate1k">Rate, per 1000 sq ft</option>
+</select></div>
+<div class="field"><label for="mPrice">Price ($)</label><input type="number" id="mPrice" min="0" step="0.5" placeholder="0"></div>
+</div>
+<div class="field" id="mFactorWrap"><label for="mFactor">Tons per cu yd (ton mode) or lb per 1k sf (rate mode)</label><input type="number" id="mFactor" min="0" step="0.05" placeholder="0"></div>
+<button class="act" id="addMaterial">Add material</button>
+</div>
+</section>
+
+</main>
+<datalist id="clientNames"></datalist>
+<script>
+var state = {
+  seq: 1,
+  clients: [],
+  jobs: [],
+  crews: [],
+  leads: [],
+  estimates: [],
+  invoices: [],
+  materials: [
+    {name:'Hardwood mulch', mode:'volume-yd', unit:'cu yd', price:42},
+    {name:'Dyed black mulch', mode:'volume-yd', unit:'cu yd', price:54},
+    {name:'Screened topsoil', mode:'volume-yd', unit:'cu yd', price:38},
+    {name:'3/4 in clean stone', mode:'volume-ton', unit:'ton', price:68, factor:1.4},
+    {name:'River jack 1-2 in', mode:'volume-ton', unit:'ton', price:96, factor:1.35},
+    {name:'Sod, tall fescue', mode:'area', unit:'sq ft', price:0.68},
+    {name:'Snapshot 2.5TG', mode:'rate1k', unit:'lb', price:2.85, factor:3.5}
+  ],
+  estimate: {client:'', lines:[]},
+  overheadPerHour: 0
+};
+
+var CATEGORIES = ['Maintenance','Mulch & Bed Work','Hardscape / Stone','Cleanup','Turf Treatment','Other'];
+var STAGES = ['New','Contacted','Estimated','Won'];
+var editingClientId = null;
+var currentScheduleDate = null;
+
+function $(id){ return document.getElementById(id); }
+function money(n){ n = Number(n)||0; return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function money0(n){ n = Number(n)||0; return '$' + Math.round(n).toLocaleString('en-US'); }
+function uid(){ return state.seq++; }
+function pad2(n){ return (n<10?'0':'')+n; }
+function todayISO(){ var d = new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function addDaysISO(iso, days){ var d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+days); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function fmtDate(iso){ if(!iso) return ''; var d = new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+function esc(s){ s = (s===undefined||s===null) ? '' : String(s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function daysBetween(a,b){ var d1 = new Date(a+'T00:00:00'), d2 = new Date(b+'T00:00:00'); return Math.round((d2-d1)/86400000); }
+
+function startOfWeekDate(d){
+  var day = d.getDay();
+  var diff = (day===0? -6 : 1) - day;
+  var s = new Date(d);
+  s.setDate(d.getDate()+diff);
+  s.setHours(0,0,0,0);
+  return s;
+}
+function weekRange(offsetWeeksAgo){
+  var now = new Date(); now.setHours(0,0,0,0);
+  var thisMonday = startOfWeekDate(now);
+  var start = new Date(thisMonday); start.setDate(thisMonday.getDate() - offsetWeeksAgo*7);
+  var end = new Date(start); end.setDate(start.getDate()+7);
+  return {start:start, end:end};
+}
+function isoInRange(iso, range){
+  if(!iso) return false;
+  var d = new Date(iso+'T00:00:00');
+  return d >= range.start && d < range.end;
+}
+
+var STORAGE_KEY = 'fieldflow.savedData.v2';
+function saveState(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ console.warn('FieldFlow: could not save data', e); }
+}
+function loadState(){
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    var saved = JSON.parse(raw);
+    for(var k in saved){ if(Object.prototype.hasOwnProperty.call(saved,k)) state[k] = saved[k]; }
+  } catch(e){ console.warn('FieldFlow: could not load saved data', e); }
+}
+
+function ensureClient(name){
+  name = (name||'').trim();
+  if(!name) return null;
+  var found = state.clients.filter(function(c){ return c.name.trim().toLowerCase() === name.toLowerCase(); })[0];
+  if(found) return found;
+  var c = {id:uid(), name:name, addr:'', phone:'', email:'', notes:''};
+  state.clients.push(c);
+  return c;
+}
+
+var TITLES = {
+  overview: ['Dashboard','Overview'],
+  schedule: ['Operations','Schedule'],
+  clients: ['Accounts','Clients'],
+  estimates: ['Sales','Estimate Builder'],
+  pipeline: ['Sales','Leads Pipeline'],
+  crews: ['Operations','Crews'],
+  invoicing: ['Accounts','Invoicing'],
+  tools: ['Field math','Tools']
+};
+
+$('nav').addEventListener('click', function(e){
+  var btn = e.target.closest('button');
+  if(!btn) return;
+  var name = btn.dataset.view;
+  var navBtns = document.querySelectorAll('.nav button');
+  navBtns.forEach(function(b){ b.classList.toggle('on', b===btn); });
+  var views = document.querySelectorAll('.view');
+  views.forEach(function(v){ v.classList.toggle('on', v.id === 'view-'+name); });
+  $('crumb').textContent = TITLES[name][0];
+  $('viewTitle').textContent = TITLES[name][1];
+  renderAll();
+});
+
+function renderHeader(){
+  var now = new Date();
+  $('todayLabel').textContent = now.toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  $('brandSub').textContent = 'Ops · ' + now.toLocaleDateString('en-US',{month:'short', year:'numeric'});
+}
+
+function revenueForWeek(offsetWeeksAgo){
+  var range = weekRange(offsetWeeksAgo);
+  var sum = 0;
+  state.jobs.forEach(function(j){ if(j.done && isoInRange(j.date, range)) sum += Number(j.value)||0; });
+  return sum;
+}
+
+function monthRevenue(){
+  var now = new Date();
+  var ym = now.getFullYear()+'-'+pad2(now.getMonth()+1);
+  var sum = 0;
+  state.jobs.forEach(function(j){ if(j.done && j.date && j.date.slice(0,7)===ym) sum += Number(j.value)||0; });
+  return sum;
+}
+
+function crewUtilization(crew){
+  var range = weekRange(0);
+  var hours = 0;
+  state.jobs.forEach(function(j){ if(j.crewId===crew.id && isoInRange(j.date, range)) hours += Number(j.hours)||0; });
+  var cap = Number(crew.capacity)||0;
+  return cap>0 ? Math.round((hours/cap)*100) : 0;
+}
+
+function renderKpis(){
+  var mtd = monthRevenue();
+  var pipeline = state.leads.filter(function(l){ return l.stage<3; }).reduce(function(s,l){ return s+(Number(l.value)||0); },0);
+  var todayJobs = state.jobs.filter(function(j){ return j.date===todayISO(); });
+  var openToday = todayJobs.filter(function(j){ return !j.done; }).length;
+  var doneJobsCount = state.jobs.filter(function(j){ return j.done; }).length;
+  var avgJob = doneJobsCount>0 ? mtd/doneJobsCount : 0;
+  var utilAvg = '—';
+  if(state.crews.length){
+    var total = state.crews.reduce(function(s,c){ return s+crewUtilization(c); },0);
+    utilAvg = Math.round(total/state.crews.length) + '%';
+  }
+  var cards = [
+    {num: money0(mtd), lbl:'Revenue MTD'},
+    {num: openToday + ' / ' + todayJobs.length, lbl:'Jobs left today'},
+    {num: money0(pipeline), lbl:'Open pipeline'},
+    {num: doneJobsCount>0 ? money0(avgJob) : '—', lbl:'Avg job value'},
+    {num: utilAvg, lbl:'Crew utilization'}
+  ];
+  $('kpis').innerHTML = cards.map(function(c){
+    return '<div class="card kpi"><p class="num">'+c.num+'</p><p class="lbl">'+esc(c.lbl)+'</p></div>';
+  }).join('');
+}
+
+function renderChart(){
+  var data = [];
+  for(var w=7; w>=0; w--){ data.push(revenueForWeek(w)); }
+  var W=640, H=190, pad=26, gap=12;
+  var max = Math.max.apply(null, data.concat([1])) * 1.12;
+  var bw = (W - pad*2 - gap*(data.length-1)) / data.length;
+  var svg = '';
+  svg += '<line x1="'+pad+'" y1="'+(H-24)+'" x2="'+(W-pad)+'" y2="'+(H-24)+'" stroke="var(--line)" stroke-width="1"/>';
+  var hasAny = data.some(function(v){ return v>0; });
+  data.forEach(function(v,i){
+    var h = (v/max)*(H-58);
+    var x = pad + i*(bw+gap);
+    var y = H-24-h;
+    var last = i===data.length-1;
+    svg += '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" fill="'+(last?'var(--paint)':'var(--bark)')+'" rx="1"/>';
+    if(v>0) svg += '<text x="'+(x+bw/2)+'" y="'+(y-6)+'" text-anchor="middle">'+Math.round(v/1000)+'k</text>';
+    svg += '<text x="'+(x+bw/2)+'" y="'+(H-8)+'" text-anchor="middle">'+(i===7?'This wk':('-'+(7-i)+'w'))+'</text>';
+  });
+  $('chart').innerHTML = svg;
+  if(!hasAny){
+    var note = document.getElementById('chartNote');
+    if(!note){
+      note = document.createElement('p');
+      note.className = 'note';
+      note.id = 'chartNote';
+      note.textContent = 'No completed jobs yet. Mark stops complete on the Schedule tab to see revenue trends here.';
+      $('chart').parentNode.appendChild(note);
+    }
+  } else {
+    var n2 = document.getElementById('chartNote');
+    if(n2) n2.remove();
+  }
+}
+
+function renderUtil(){
+  if(!state.crews.length){
+    $('utilList').innerHTML = '<p class="empty">No crews yet. Add one in the Crews tab.</p>';
+    return;
+  }
+  $('utilList').innerHTML = state.crews.map(function(c){
+    var u = crewUtilization(c);
+    return '<div class="util"><div class="util-top"><b>'+esc(c.name)+'</b><span>'+u+'%</span></div><div class="bar"><i class="'+(u>90?'hot':'')+'" style="width:'+Math.min(u,100)+'%"></i></div></div>';
+  }).join('');
+}
+
+function renderServices(){
+  var byCat = {};
+  CATEGORIES.forEach(function(cat){ byCat[cat] = {jobs:0, rev:0}; });
+  var now = new Date();
+  var ym = now.getFullYear()+'-'+pad2(now.getMonth()+1);
+  state.jobs.forEach(function(j){
+    if(j.done && j.date && j.date.slice(0,7)===ym){
+      var cat = byCat[j.category] ? j.category : 'Other';
+      byCat[cat].jobs++;
+      byCat[cat].rev += Number(j.value)||0;
+    }
+  });
+  var rows = CATEGORIES.filter(function(cat){ return byCat[cat].jobs>0; });
+  if(!rows.length){
+    $('serviceRows').innerHTML = '<tr><td class="empty">No completed jobs this month yet.</td></tr>';
+  } else {
+    $('serviceRows').innerHTML = rows.map(function(cat){
+      var r = byCat[cat];
+      return '<tr><td>'+esc(cat)+'</td><td class="n">'+r.jobs+'</td><td class="n">'+money0(r.rev)+'</td></tr>';
+    }).join('');
+  }
+}
+
+function renderAlerts(){
+  var list = [];
+  var today = todayISO();
+  state.invoices.forEach(function(inv){
+    if(!inv.paid && inv.due && inv.due < today){
+      var d = daysBetween(inv.due, today);
+      list.push({what: inv.client + ' invoice, ' + d + ' day' + (d===1?'':'s') + ' past due', amt: money0(inv.amount)});
+    }
+  });
+  state.crews.forEach(function(c){
+    var u = crewUtilization(c);
+    if((Number(c.capacity)||0) > 0 && u < 65){
+      list.push({what: c.name + ' is under 65% utilization this week', amt: u+'%'});
+    }
+  });
+  state.leads.forEach(function(l){
+    if(l.stage < 3 && l.created){
+      var d2 = daysBetween(l.created, today);
+      if(d2 > 14) list.push({what: l.name + ' has been in the pipeline for ' + d2 + ' days without progress', amt:'—'});
+    }
+  });
+  var unassignedToday = state.jobs.filter(function(j){ return j.date===today && !j.crewId; }).length;
+  if(unassignedToday>0) list.push({what: unassignedToday + ' job' + (unassignedToday===1?'':'s') + ' today with no crew assigned', amt:'—'});
+
+  if(!list.length){
+    $('alertRows').innerHTML = '<tr><td class="empty">All caught up, nothing needs attention right now.</td></tr>';
+  } else {
+    $('alertRows').innerHTML = list.map(function(a){ return '<tr><td>'+esc(a.what)+'</td><td class="n">'+esc(a.amt)+'</td></tr>'; }).join('');
+  }
+}
+
+function fillCategorySelect(){
+  $('jCategory').innerHTML = CATEGORIES.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
+}
+function fillCrewSelect(){
+  var opts = '<option value="">Unassigned</option>' + state.crews.map(function(c){ return '<option value="'+c.id+'">'+esc(c.name)+'</option>'; }).join('');
+  $('jCrew').innerHTML = opts;
+}
+function fillClientDatalist(){
+  $('clientNames').innerHTML = state.clients.map(function(c){ return '<option value="'+esc(c.name)+'"></option>'; }).join('');
+}
+function crewName(id){
+  if(!id) return 'Unassigned';
+  var c = state.crews.filter(function(x){ return x.id===Number(id); })[0];
+  return c ? c.name : 'Unassigned';
+}
+
+function addJob(){
+  var client = $('jClient').value.trim();
+  var category = $('jCategory').value;
+  var crewId = $('jCrew').value ? Number($('jCrew').value) : null;
+  var type = $('jType').value.trim();
+  var addr = $('jAddr').value.trim();
+  var date = $('jDate').value || todayISO();
+  var start = $('jStart').value || '';
+  var hours = Number($('jHours').value)||0;
+  var value = Number($('jValue').value)||0;
+  if(!client || !type){ alert('Add at least a client name and a job description.'); return; }
+  ensureClient(client);
+  state.jobs.push({id:uid(), client:client, category:category||'Other', crewId:crewId, type:type, addr:addr, date:date, start:start, hours:hours, value:value, done:false});
+  $('jClient').value=''; $('jType').value=''; $('jAddr').value=''; $('jStart').value=''; $('jHours').value=''; $('jValue').value='';
+  currentScheduleDate = date;
+  renderAll();
+  saveState();
+}
+
+function toggleJobDone(id){
+  var job = state.jobs.filter(function(j){ return j.id===id; })[0];
+  if(!job) return;
+  job.done = !job.done;
+  renderAll();
+  saveState();
+}
+function deleteJob(id){
+  if(!confirm('Delete this job?')) return;
+  state.jobs = state.jobs.filter(function(j){ return j.id!==id; });
+  renderAll();
+  saveState();
+}
+function assignCrewToJob(jobId, crewId){
+  var job = state.jobs.filter(function(j){ return j.id===jobId; })[0];
+  if(!job) return;
+  job.crewId = crewId ? Number(crewId) : null;
+  renderAll();
+  saveState();
+}
+
+function renderRoute(){
+  if(!currentScheduleDate) currentScheduleDate = todayISO();
+  $('routeDateLabel').textContent = fmtDate(currentScheduleDate) + (currentScheduleDate===todayISO() ? ' (Today)' : '');
+  var dayJobs = state.jobs.filter(function(j){ return j.date===currentScheduleDate; }).sort(function(a,b){ return (a.start||'').localeCompare(b.start||''); });
+  if(!dayJobs.length){
+    $('route').innerHTML = '<p class="empty">No jobs scheduled for this day. Add one above.</p>';
+  } else {
+    $('route').innerHTML = dayJobs.map(function(j){
+      return '<div class="stop '+(j.done?'done':'')+'">'+
+        '<div class="stop-time">'+esc(j.start||'--:--')+'</div>'+
+        '<div class="stop-dot"></div>'+
+        '<div class="stop-body">'+
+          '<div><h4>'+esc(j.client)+'</h4><div class="stop-meta">'+esc(j.type)+(j.addr?(' · '+esc(j.addr)):'')+' · '+esc(crewName(j.crewId))+'</div></div>'+
+          '<div class="stop-right"><div class="stop-val">'+money0(j.value)+'</div>'+
+          '<button class="ghost" onclick="toggleJobDone('+j.id+')">'+(j.done?'Reopen':'Complete')+'</button>'+
+          '<button class="ghost" onclick="deleteJob('+j.id+')">Delete</button></div>'+
+        '</div></div>';
+    }).join('');
+  }
+  var booked = dayJobs.reduce(function(s,j){ return s+(Number(j.value)||0); },0);
+  var done = dayJobs.filter(function(j){ return j.done; }).reduce(function(s,j){ return s+(Number(j.value)||0); },0);
+  var hours = dayJobs.reduce(function(s,j){ return s+(Number(j.hours)||0); },0);
+  $('dayBooked').innerHTML = money0(booked) + '<small>Booked this day</small>';
+  $('dayDone').innerHTML = money0(done) + '<small>Completed</small>';
+  $('dayHours').innerHTML = hours.toFixed(1) + ' h<small>Field hours scheduled</small>';
+}
+
+function renderUnassigned(){
+  var jobs = state.jobs.filter(function(j){ return !j.crewId && !j.done; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+  if(!jobs.length){
+    $('unassigned').innerHTML = '<tr><td class="empty">Nothing unassigned.</td></tr>';
+    return;
+  }
+  var crewOpts = '<option value="">Assign crew...</option>' + state.crews.map(function(c){ return '<option value="'+c.id+'">'+esc(c.name)+'</option>'; }).join('');
+  $('unassigned').innerHTML = jobs.map(function(j){
+    return '<tr><td>'+esc(fmtDate(j.date))+'<br><span style="color:var(--muted);font-size:12px;">'+esc(j.client)+' · '+esc(j.type)+'</span></td>'+
+      '<td class="n">'+money0(j.value)+'</td>'+
+      '<td><select onchange="assignCrewToJob('+j.id+', this.value)">'+crewOpts+'</select></td></tr>';
+  }).join('');
+}
+
+function addClient(){
+  var name = $('cName').value.trim();
+  if(!name){ alert('Enter a client name.'); return; }
+  var data = {name:name, addr:$('cAddr').value.trim(), phone:$('cPhone').value.trim(), email:$('cEmail').value.trim(), notes:$('cNotes').value.trim()};
+  if(editingClientId){
+    var c = state.clients.filter(function(x){ return x.id===editingClientId; })[0];
+    if(c){ c.name=data.name; c.addr=data.addr; c.phone=data.phone; c.email=data.email; c.notes=data.notes; }
+    editingClientId = null;
+    $('clientFormTitle').textContent = 'Add a client';
+    $('cancelClientEdit').style.display = 'none';
+  } else {
+    state.clients.push(Object.assign({id:uid()}, data));
+  }
+  ['cName','cAddr','cPhone','cEmail','cNotes'].forEach(function(id){ $(id).value=''; });
+  renderAll();
+  saveState();
+}
+function editClient(id){
+  var c = state.clients.filter(function(x){ return x.id===id; })[0];
+  if(!c) return;
+  editingClientId = id;
+  $('cName').value=c.name; $('cAddr').value=c.addr||''; $('cPhone').value=c.phone||''; $('cEmail').value=c.email||''; $('cNotes').value=c.notes||'';
+  $('clientFormTitle').textContent = 'Edit client';
+  $('cancelClientEdit').style.display = 'inline-block';
+  window.scrollTo(0,0);
+}
+function cancelClientEdit(){
+  editingClientId = null;
+  ['cName','cAddr','cPhone','cEmail','cNotes'].forEach(function(id){ $(id).value=''; });
+  $('clientFormTitle').textContent = 'Add a client';
+  $('cancelClientEdit').style.display = 'none';
+}
+function deleteClient(id){
+  if(!confirm('Delete this client from your directory? Existing jobs and invoices will keep the client name on record.')) return;
+  state.clients = state.clients.filter(function(c){ return c.id!==id; });
+  renderAll();
+  saveState();
+}
+
+function renderClients(){
+  if(!state.clients.length){
+    $('clientRows').innerHTML = '<tr><td class="empty">No clients yet. Add your first one on the left.</td></tr>';
+    return;
+  }
+  $('clientRows').innerHTML = state.clients.map(function(c){
+    var jobsCount = state.jobs.filter(function(j){ return j.client.trim().toLowerCase()===c.name.trim().toLowerCase(); }).length;
+    var billed = state.invoices.filter(function(i){ return i.client.trim().toLowerCase()===c.name.trim().toLowerCase() && i.paid; }).reduce(function(s,i){ return s+(Number(i.amount)||0); },0);
+    var contact = [c.phone, c.email].filter(Boolean).map(esc).join('<br>');
+    return '<tr><td>'+esc(c.name)+(c.addr?('<br><span style="color:var(--muted);font-size:12px;">'+esc(c.addr)+'</span>'):'')+'</td>'+
+      '<td>'+(contact||'<span style="color:var(--muted);">—</span>')+'</td>'+
+      '<td class="n">'+jobsCount+'</td><td class="n">'+money0(billed)+'</td>'+
+      '<td><div class="row-actions"><button class="ghost" onclick="editClient('+c.id+')">Edit</button><button class="ghost" onclick="deleteClient('+c.id+')">Delete</button></div></td></tr>';
+  }).join('');
+}
+
+function modeLabel(mode){
+  if(mode==='volume-yd') return 'Volume, cu yd';
+  if(mode==='volume-ton') return 'Volume, tons';
+  if(mode==='area') return 'Flat, per sq ft';
+  if(mode==='rate1k') return 'Rate, per 1000 sf';
+  return mode;
+}
+function needsDepth(mat){ return mat.mode==='volume-yd' || mat.mode==='volume-ton'; }
+function materialQuantity(mat, areaSqFt, depthIn){
+  if(mat.mode==='area') return {qty:areaSqFt, unit: mat.unit||'sq ft'};
+  if(mat.mode==='rate1k') return {qty:(areaSqFt/1000)*(Number(mat.factor)||0), unit: mat.unit||'lb'};
+  var cubicYards = (areaSqFt*((depthIn||0)/12))/27;
+  if(mat.mode==='volume-ton') return {qty: cubicYards*(Number(mat.factor)||1), unit:'ton'};
+  return {qty: cubicYards, unit:'cu yd'};
+}
+function fillMaterialSelects(){
+  var opts = state.materials.map(function(m,i){ return '<option value="'+i+'">'+esc(m.name)+' — '+money(m.price)+'/'+esc(m.unit)+'</option>'; }).join('');
+  $('material').innerHTML = opts;
+  $('mpMaterial').innerHTML = opts;
+}
+function syncDepthField(){
+  if(!state.materials.length) return;
+  var mat = state.materials[Number($('material').value)||0];
+  $('depthWrap').style.visibility = needsDepth(mat) ? 'visible' : 'hidden';
+  previewLine();
+}
+function previewLine(){
+  if(!state.materials.length){ $('calcPreview').textContent=''; return; }
+  var mat = state.materials[Number($('material').value)||0];
+  var area = Number($('area').value)||0;
+  var depth = Number($('depth').value)||0;
+  var r = materialQuantity(mat, area, depth);
+  var raw = r.qty*mat.price;
+  $('calcPreview').textContent = r.qty.toFixed(2)+' '+r.unit+' at '+money(mat.price)+' = '+money(raw)+' before markup.';
+}
+function addLine(){
+  if(!state.materials.length){ alert('Add a material in Tools first.'); return; }
+  var mat = state.materials[Number($('material').value)||0];
+  var area = Number($('area').value)||0;
+  var depth = Number($('depth').value)||0;
+  var hours = Number($('hours').value)||0;
+  var rate = Number($('rate').value)||0;
+  var markup = Number($('markup').value)||0;
+  if(area<=0){ alert('Enter an area greater than 0.'); return; }
+  var r = materialQuantity(mat, area, depth);
+  var matCost = r.qty*mat.price*(1+markup/100);
+  var labCost = hours*rate;
+  state.estimate.client = $('client').value.trim() || 'Untitled';
+  state.estimate.lines.push({label: mat.name+' — '+area.toLocaleString()+' sf', qty: r.qty.toFixed(2)+' '+r.unit, matCost:matCost, labCost:labCost, hours:hours});
+  renderEstimate();
+  saveState();
+}
+function deleteEstLine(i){
+  state.estimate.lines.splice(i,1);
+  renderEstimate();
+  saveState();
+}
+function estimateTotals(){
+  var est = state.estimate;
+  var mat = est.lines.reduce(function(s,l){ return s+l.matCost; },0);
+  var lab = est.lines.reduce(function(s,l){ return s+l.labCost; },0);
+  var hrs = est.lines.reduce(function(s,l){ return s+l.hours; },0);
+  var oh = hrs*state.overheadPerHour;
+  var total = mat+lab+oh;
+  var cost = mat/1.25 + lab*0.55 + oh;
+  var margin = total>0 ? ((total-cost)/total)*100 : 0;
+  return {mat:mat, lab:lab, oh:oh, total:total, margin:margin};
+}
+function renderEstimate(){
+  var est = state.estimate;
+  $('estClient').textContent = est.client || '—';
+  if(!est.lines.length){
+    $('estRows').innerHTML = '<tr><td colspan="4" class="empty">No lines yet. Build one on the left.</td></tr>';
+  } else {
+    $('estRows').innerHTML = est.lines.map(function(l,i){
+      return '<tr><td>'+esc(l.label)+'<br><span style="color:var(--muted);font-size:12px;">'+l.hours+' h labor</span></td>'+
+        '<td class="n">'+esc(l.qty)+'</td><td class="n">'+money(l.matCost+l.labCost)+'</td>'+
+        '<td class="n"><button class="ghost" onclick="deleteEstLine('+i+')">×</button></td></tr>';
+    }).join('');
+  }
+  var t = estimateTotals();
+  $('tMat').textContent = money(t.mat);
+  $('tLab').textContent = money(t.lab);
+  $('tOh').textContent = money(t.oh);
+  $('tGrand').textContent = money(t.total);
+  $('tMargin').textContent = t.total>0 ? t.margin.toFixed(1)+'%' : '—';
+}
+function saveEstimate(){
+  var est = state.estimate;
+  if(!est.lines.length){ alert('Add at least one line item first.'); return; }
+  var client = est.client || 'Untitled';
+  ensureClient(client);
+  var t = estimateTotals();
+  state.estimates.push({id:uid(), client:client, lines:est.lines.slice(), total:t.total, created:todayISO()});
+  renderAll();
+  saveState();
+}
+function clearEstimate(){
+  state.estimate = {client:'', lines:[]};
+  $('client').value='';
+  renderEstimate();
+  saveState();
+}
+function deleteSavedEstimate(id){
+  state.estimates = state.estimates.filter(function(e){ return e.id!==id; });
+  renderAll();
+  saveState();
+}
+function convertEstimateToJob(id){
+  var e = state.estimates.filter(function(x){ return x.id===id; })[0];
+  if(!e) return;
+  var hrs = e.lines.reduce(function(s,l){ return s+(Number(l.hours)||0); },0);
+  ensureClient(e.client);
+  state.jobs.push({id:uid(), client:e.client, category:'Other', crewId:null, type:'Estimate converted to job', addr:'', date:todayISO(), start:'', hours:hrs, value:e.total, done:false});
+  alert('Job created on the Schedule tab for today.');
+  renderAll();
+  saveState();
+}
+function renderSavedEstimates(){
+  if(!state.estimates.length){
+    $('savedEstRows').innerHTML = '<tr><td class="empty">No saved estimates yet.</td></tr>';
+    return;
+  }
+  $('savedEstRows').innerHTML = state.estimates.slice().reverse().map(function(e){
+    return '<tr><td>'+esc(e.client)+'</td><td>'+esc(fmtDate(e.created))+'</td><td class="n">'+money(e.total)+'</td>'+
+      '<td><div class="row-actions"><button class="ghost" onclick="convertEstimateToJob('+e.id+')">To job</button><button class="ghost" onclick="deleteSavedEstimate('+e.id+')">Delete</button></div></td></tr>';
+  }).join('');
+}
+
+function addLead(){
+  var name = $('lName').value.trim();
+  var src = $('lSrc').value.trim();
+  var value = Number($('lValue').value)||0;
+  if(!name){ alert('Enter a prospect name.'); return; }
+  state.leads.push({id:uid(), name:name, src:src||'Unknown', value:value, stage:0, created:todayISO()});
+  $('lName').value=''; $('lSrc').value=''; $('lValue').value='';
+  renderAll();
+  saveState();
+}
+function deleteLead(id){
+  state.leads = state.leads.filter(function(l){ return l.id!==id; });
+  renderAll();
+  saveState();
+}
+function advanceLead(id){
+  var lead = state.leads.filter(function(l){ return l.id===id; })[0];
+  if(!lead) return;
+  if(lead.stage < STAGES.length-1){
+    lead.stage++;
+  } else {
+    state.leads = state.leads.filter(function(l){ return l.id!==id; });
+    ensureClient(lead.name);
+    state.jobs.push({id:uid(), client:lead.name, category:'Other', crewId:null, type:'New client, won lead', addr:'', date:todayISO(), start:'', hours:0, value:lead.value, done:true});
+  }
+  renderAll();
+  saveState();
+}
+function renderBoard(){
+  $('board').innerHTML = STAGES.map(function(stage, si){
+    var inStage = state.leads.filter(function(l){ return l.stage===si; });
+    var sum = inStage.reduce(function(s,l){ return s+(Number(l.value)||0); },0);
+    var cards = inStage.length ? inStage.map(function(l){
+      return '<div class="lead" tabindex="0" onclick="advanceLead('+l.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();advanceLead('+l.id+');}">'+
+        '<button class="del" onclick="event.stopPropagation();deleteLead('+l.id+')">×</button>'+
+        '<h4>'+esc(l.name)+'</h4><div class="src">'+esc(l.src)+'</div><span class="amt">'+money0(l.value)+'</span></div>';
+    }).join('') : '<div class="col-empty">Nothing here</div>';
+    return '<div><div class="col-head"><h3>'+esc(stage)+'</h3><span class="col-sum">'+inStage.length+' · '+money0(sum)+'</span></div>'+cards+'</div>';
+  }).join('');
+  var open = state.leads.filter(function(l){ return l.stage<3; }).reduce(function(s,l){ return s+(Number(l.value)||0); },0);
+  $('pipeTotal').textContent = money0(open);
+}
+function renderStaleLeads(){
+  var today = todayISO();
+  var stale = state.leads.filter(function(l){ return l.stage<3 && l.created && daysBetween(l.created, today) > 14; });
+  if(!stale.length){
+    $('staleLeads').innerHTML = '<p class="empty">No stale leads. Nice work keeping the pipeline moving.</p>';
+    return;
+  }
+  $('staleLeads').innerHTML = stale.map(function(l){
+    return '<div class="util"><div class="util-top"><b>'+esc(l.name)+'</b><span>'+daysBetween(l.created, today)+' days</span></div></div>';
+  }).join('');
+}
+
+function addCrew(){
+  var name = $('crName').value.trim();
+  var cap = Number($('crCapacity').value)||0;
+  if(!name){ alert('Enter a crew name.'); return; }
+  state.crews.push({id:uid(), name:name, capacity:cap});
+  $('crName').value=''; $('crCapacity').value='';
+  renderAll();
+  saveState();
+}
+function deleteCrew(id){
+  if(!confirm('Delete this crew? Jobs assigned to it will become unassigned.')) return;
+  state.crews = state.crews.filter(function(c){ return c.id!==id; });
+  state.jobs.forEach(function(j){ if(j.crewId===id) j.crewId=null; });
+  renderAll();
+  saveState();
+}
+function renderCrews(){
+  if(!state.crews.length){
+    $('crewRows').innerHTML = '<tr><td class="empty">No crews yet. Add your first one on the left.</td></tr>';
+    return;
+  }
+  var range = weekRange(0);
+  $('crewRows').innerHTML = state.crews.map(function(c){
+    var hours = state.jobs.filter(function(j){ return j.crewId===c.id && isoInRange(j.date, range); }).reduce(function(s,j){ return s+(Number(j.hours)||0); },0);
+    var u = crewUtilization(c);
+    return '<tr><td>'+esc(c.name)+'</td><td class="n">'+(Number(c.capacity)||0)+' h</td><td class="n">'+hours.toFixed(1)+' h</td>'+
+      '<td class="n">'+u+'%</td><td><button class="ghost" onclick="deleteCrew('+c.id+')">Delete</button></td></tr>';
+  }).join('');
+}
+
+function completedJobsWithoutInvoice(){
+  var invoicedJobIds = state.invoices.map(function(i){ return i.jobId; });
+  return state.jobs.filter(function(j){ return j.done && invoicedJobIds.indexOf(j.id)===-1; });
+}
+function fillInvoiceJobSelect(){
+  var jobs = completedJobsWithoutInvoice();
+  if(!jobs.length){
+    $('invJob').innerHTML = '<option value="">No completed jobs available</option>';
+    $('invHint').textContent = 'Complete a job on the Schedule tab to invoice it.';
+    return;
+  }
+  $('invHint').textContent = '';
+  $('invJob').innerHTML = jobs.map(function(j){
+    return '<option value="'+j.id+'">'+esc(j.client)+' — '+esc(j.type)+' — '+esc(fmtDate(j.date))+' — '+money0(j.value)+'</option>';
+  }).join('');
+}
+function onInvoiceJobChange(){
+  var id = Number($('invJob').value);
+  var job = state.jobs.filter(function(j){ return j.id===id; })[0];
+  if(!job) return;
+  $('invAmount').value = job.value;
+  $('invIssue').value = todayISO();
+  $('invDue').value = addDaysISO(todayISO(), 14);
+}
+function addInvoice(){
+  var jobId = Number($('invJob').value);
+  var job = state.jobs.filter(function(j){ return j.id===jobId; })[0];
+  if(!job){ alert('Choose a completed job to invoice.'); return; }
+  var amount = Number($('invAmount').value)||0;
+  var issue = $('invIssue').value || todayISO();
+  var due = $('invDue').value || addDaysISO(issue, 14);
+  state.invoices.push({id:uid(), jobId:jobId, client:job.client, amount:amount, issue:issue, due:due, paid:false, paidDate:null});
+  renderAll();
+  saveState();
+}
+function toggleInvoicePaid(id){
+  var inv = state.invoices.filter(function(i){ return i.id===id; })[0];
+  if(!inv) return;
+  inv.paid = !inv.paid;
+  inv.paidDate = inv.paid ? todayISO() : null;
+  renderAll();
+  saveState();
+}
+function deleteInvoice(id){
+  if(!confirm('Delete this invoice?')) return;
+  state.invoices = state.invoices.filter(function(i){ return i.id!==id; });
+  renderAll();
+  saveState();
+}
+function renderInvoices(){
+  var today = todayISO();
+  if(!state.invoices.length){
+    $('invoiceRows').innerHTML = '<tr><td class="empty">No invoices yet.</td></tr>';
+  } else {
+    $('invoiceRows').innerHTML = state.invoices.slice().sort(function(a,b){ return (a.due||'').localeCompare(b.due||''); }).map(function(i){
+      var job = state.jobs.filter(function(j){ return j.id===i.jobId; })[0];
+      var status = i.paid ? '<span class="tag paid">Paid</span>' : (i.due<today ? '<span class="tag overdue">Overdue</span>' : '<span class="tag unpaid">Unpaid</span>');
+      return '<tr><td>'+esc(i.client)+'</td><td>'+esc(job?job.type:'—')+'</td><td class="n">'+money0(i.amount)+'</td>'+
+        '<td>'+esc(fmtDate(i.issue))+'</td><td>'+esc(fmtDate(i.due))+'</td><td>'+status+'</td>'+
+        '<td><div class="row-actions"><button class="ghost" onclick="toggleInvoicePaid('+i.id+')">'+(i.paid?'Mark unpaid':'Mark paid')+'</button><button class="ghost" onclick="deleteInvoice('+i.id+')">Delete</button></div></td></tr>';
+    }).join('');
+  }
+  var outstanding = state.invoices.filter(function(i){ return !i.paid; }).reduce(function(s,i){ return s+(Number(i.amount)||0); },0);
+  var overdue = state.invoices.filter(function(i){ return !i.paid && i.due<today; }).reduce(function(s,i){ return s+(Number(i.amount)||0); },0);
+  $('invOutstanding').innerHTML = money0(outstanding) + '<small>Outstanding</small>';
+  $('invOverdue').innerHTML = money0(overdue) + '<small>Overdue</small>';
+}
+
+function calcOverhead(){
+  var monthly = Number($('ohMonthly').value)||0;
+  var hours = Number($('ohCrews').value)||0;
+  var rate = hours>0 ? monthly/hours : 0;
+  state.overheadPerHour = rate;
+  $('ohRate').innerHTML = money(rate) + '<small>Overhead per billable hour</small>';
+  calcBreakeven();
+  renderEstimate();
+}
+function calcBreakeven(){
+  var wage = Number($('beWage').value)||0;
+  var margin = Number($('beMargin').value)||0;
+  var base = wage + state.overheadPerHour;
+  var rate = margin<100 ? base/(1-margin/100) : base;
+  $('beRate').innerHTML = money(rate) + '<small>Minimum billable rate</small>';
+}
+function calcPricer(){
+  if(!state.materials.length){ $('mpQty').innerHTML='—<small>Quantity needed</small>'; $('mpCost').innerHTML='—<small>Material cost at yard price</small>'; return; }
+  var mat = state.materials[Number($('mpMaterial').value)||0];
+  var area = Number($('mpArea').value)||0;
+  var depth = Number($('mpDepth').value)||0;
+  var r = materialQuantity(mat, area, depth);
+  $('mpQty').innerHTML = r.qty.toFixed(2)+' '+r.unit+'<small>Quantity needed</small>';
+  $('mpCost').innerHTML = money(r.qty*mat.price)+'<small>Material cost at yard price</small>';
+}
+function calcEstVsActual(){
+  var quote = Number($('eaQuote').value)||0;
+  var cost = Number($('eaCost').value)||0;
+  var estH = Number($('eaEstH').value)||0;
+  var actH = Number($('eaActH').value)||0;
+  var margin = quote>0 ? ((quote-cost)/quote)*100 : 0;
+  $('eaMargin').innerHTML = margin.toFixed(1)+'%<small>Realized margin</small>';
+  var drift = estH>0 ? ((actH-estH)/estH)*100 : 0;
+  var verdict;
+  if(estH===0 && actH===0) verdict = 'Enter estimated and actual hours to see a verdict.';
+  else if(drift>15) verdict = 'Ran '+drift.toFixed(0)+'% over on hours. Bid this job type higher or scope it tighter.';
+  else if(drift<-10) verdict = 'Came in '+Math.abs(drift).toFixed(0)+'% under. You may be padding, you could win more bids.';
+  else verdict = 'Hours landed within '+Math.abs(drift).toFixed(0)+'% of estimate. That is a solid bid.';
+  $('eaVerdict').textContent = verdict;
+}
+
+function syncMFactorVisibility(){
+  var mode = $('mMode').value;
+  $('mFactorWrap').style.display = (mode==='volume-ton' || mode==='rate1k') ? 'block' : 'none';
+}
+function addMaterial(){
+  var name = $('mName').value.trim();
+  var mode = $('mMode').value;
+  var price = Number($('mPrice').value)||0;
+  var factor = Number($('mFactor').value)||0;
+  if(!name || price<=0){ alert('Enter a material name and a price greater than 0.'); return; }
+  var unit = mode==='area' ? 'sq ft' : mode==='rate1k' ? 'lb' : mode==='volume-ton' ? 'ton' : 'cu yd';
+  var m = {name:name, mode:mode, unit:unit, price:price};
+  if(mode==='volume-ton' || mode==='rate1k') m.factor = factor;
+  state.materials.push(m);
+  $('mName').value=''; $('mPrice').value=''; $('mFactor').value='';
+  renderAll();
+  saveState();
+}
+function deleteMaterial(i){
+  state.materials.splice(i,1);
+  renderAll();
+  saveState();
+}
+function renderMaterials(){
+  if(!state.materials.length){
+    $('materialRows').innerHTML = '<tr><td class="empty">No materials yet. Add one below.</td></tr>';
+    return;
+  }
+  $('materialRows').innerHTML = state.materials.map(function(m,i){
+    return '<tr><td>'+esc(m.name)+'</td><td>'+esc(modeLabel(m.mode))+'</td><td class="n">'+money(m.price)+'/'+esc(m.unit)+'</td>'+
+      '<td><button class="ghost" onclick="deleteMaterial('+i+')">Delete</button></td></tr>';
+  }).join('');
+}
+
+function renderSideStats(){
+  var today = todayISO();
+  var jobsToday = state.jobs.filter(function(j){ return j.date===today; }).length;
+  var nextUnpaid = state.invoices.filter(function(i){ return !i.paid; }).sort(function(a,b){ return (a.due||'').localeCompare(b.due||''); })[0];
+  var html = state.crews.length + ' crew' + (state.crews.length===1?'':'s') + ' on record<br>' +
+    jobsToday + ' job' + (jobsToday===1?'':'s') + ' scheduled today<br>' +
+    (nextUnpaid ? ('Next invoice due ' + fmtDate(nextUnpaid.due)) : 'No open invoices');
+  var existing = $('sideStats');
+  var btn = $('resetData');
+  existing.innerHTML = html + '<br>';
+  existing.appendChild(btn);
+}
+
+function renderAll(){
+  renderHeader();
+  fillClientDatalist();
+  fillCrewSelect();
+  fillMaterialSelects();
+  fillInvoiceJobSelect();
+  renderKpis();
+  renderChart();
+  renderUtil();
+  renderServices();
+  renderAlerts();
+  renderRoute();
+  renderUnassigned();
+  renderClients();
+  renderEstimate();
+  renderSavedEstimates();
+  renderBoard();
+  renderStaleLeads();
+  renderCrews();
+  renderInvoices();
+  renderMaterials();
+  calcOverhead();
+  calcPricer();
+  calcEstVsActual();
+  renderSideStats();
+}
+
+$('addJob').addEventListener('click', addJob);
+$('prevDay').addEventListener('click', function(){ currentScheduleDate = addDaysISO(currentScheduleDate||todayISO(), -1); renderAll(); });
+$('nextDay').addEventListener('click', function(){ currentScheduleDate = addDaysISO(currentScheduleDate||todayISO(), 1); renderAll(); });
+$('todayBtn').addEventListener('click', function(){ currentScheduleDate = todayISO(); renderAll(); });
+
+$('addClient').addEventListener('click', addClient);
+$('cancelClientEdit').addEventListener('click', cancelClientEdit);
+
+$('material').addEventListener('change', syncDepthField);
+$('area').addEventListener('input', previewLine);
+$('depth').addEventListener('input', previewLine);
+$('addLine').addEventListener('click', addLine);
+$('saveEstimate').addEventListener('click', saveEstimate);
+$('clearEstimate').addEventListener('click', clearEstimate);
+
+$('addLead').addEventListener('click', addLead);
+
+$('addCrew').addEventListener('click', addCrew);
+
+$('invJob').addEventListener('change', onInvoiceJobChange);
+$('addInvoice').addEventListener('click', addInvoice);
+
+['ohMonthly','ohCrews'].forEach(function(id){ $(id).addEventListener('input', calcOverhead); });
+['beWage','beMargin'].forEach(function(id){ $(id).addEventListener('input', calcBreakeven); });
+['mpMaterial','mpArea','mpDepth'].forEach(function(id){ $(id).addEventListener('input', calcPricer); });
+['eaQuote','eaCost','eaEstH','eaActH'].forEach(function(id){ $(id).addEventListener('input', calcEstVsActual); });
+$('mMode').addEventListener('change', syncMFactorVisibility);
+$('addMaterial').addEventListener('click', addMaterial);
+
+$('resetData').addEventListener('click', function(){
+  if(!confirm('This permanently clears all clients, jobs, leads, crews, invoices, estimates and tool settings you have entered. Continue?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+loadState();
+currentScheduleDate = todayISO();
+$('jDate').value = todayISO();
+fillCategorySelect();
+syncMFactorVisibility();
+renderAll();
+syncDepthField();
+</script>
+</body>
+</html>
