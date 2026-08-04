@@ -162,6 +162,7 @@ body{flex-direction:column;}
 <li><button data-view="crews">Crews</button></li>
 <li><button data-view="invoicing">Invoicing</button></li>
 <li><button data-view="tools">Tools</button></li>
+<li><button data-view="import">Import</button></li>
 </ul>
 <div class="sidebar-foot" id="sideStats">
 <button class="ghost" id="resetData" style="margin-top:10px;width:100%;border-color:#4A443C;color:#8C8073;">Reset all data</button>
@@ -281,7 +282,7 @@ body{flex-direction:column;}
 <div class="grid two">
 <div class="card">
 <p class="card-title">Build a line item</p>
-<div class="field"><label for="client">Client</label><input list="clientNames" type="text" id="client" placeholder="Client name" style="font-family:'Barlow',sans-serif;"></div>
+<div class="field"><label for="client">Client</label><input list="clientNames" type="text" id="client" placeholder="Client name" style="font-family:'Inter',sans-serif;"></div>
 <div class="field"><label for="material">Material</label><select id="material"></select></div>
 <div class="inline">
 <div class="field"><label for="area">Area (sq ft)</label><input type="number" id="area" min="0" step="10" placeholder="0"></div>
@@ -323,7 +324,7 @@ body{flex-direction:column;}
 <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
 <div>
 <p class="card-title" style="margin:0 0 4px;">Open pipeline value</p>
-<p style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="pipeTotal">$0</p>
+<p style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="pipeTotal">$0</p>
 </div>
 <p class="note" style="margin:0;max-width:340px;">Click a lead to move it one stage right. Winning a lead creates a client record and books the job as revenue.</p>
 </div>
@@ -351,7 +352,7 @@ body{flex-direction:column;}
 <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
 <div>
 <p class="card-title" style="margin:0 0 4px;">Posts in progress</p>
-<p style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="postTotal">0</p>
+<p style="font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="postTotal">0</p>
 </div>
 <p class="note" style="margin:0;max-width:360px;">Click a post to move it to the next stage. This is a planner, not an auto-poster — use Copy to grab the caption text, then paste and publish it on the platform yourself.</p>
 </div>
@@ -470,6 +471,34 @@ body{flex-direction:column;}
 </div>
 </section>
 
+<section class="view" id="view-import">
+<div class="card">
+<div class="card-title">Bring in data from Jobber, QuickBooks, or any other tool</div>
+<p class="section-sub">Export your clients, jobs, or invoices as a CSV file from your other software, then upload it here. Everything is processed in your browser &mdash; nothing is uploaded to any server.</p>
+<div class="inline3">
+<div class="field"><label for="impType">What are you importing?</label>
+<select id="impType"><option value="clients">Clients</option><option value="jobs">Jobs</option><option value="invoices">Invoices</option></select></div>
+<div class="field"><label for="impFile">CSV file</label><input type="file" id="impFile" accept=".csv"></div>
+<div class="field"><label>&nbsp;</label><button class="ghost" id="impReset" type="button">Clear</button></div>
+</div>
+<div class="note" id="impSummary"></div>
+</div>
+<div class="card" id="impMappingCard" style="display:none;">
+<div class="card-title">Map your columns</div>
+<p class="section-sub">We matched what we could &mdash; check that each field points at the right column from your file. Fields marked * are required.</p>
+<div class="tools-grid" id="impMappingFields"></div>
+<button class="act" id="impRun" type="button">Import rows</button>
+</div>
+<div class="card" id="impPreviewCard" style="display:none;">
+<div class="card-title">Preview (first 5 rows)</div>
+<div style="overflow-x:auto;"><table><thead><tr id="impPreviewHead"></tr></thead><tbody id="impPreviewBody"></tbody></table></div>
+</div>
+<div class="card" id="impResultCard" style="display:none;">
+<div class="card-title">Import result</div>
+<div id="impResult"></div>
+</div>
+</section>
+
 </main>
 <datalist id="clientNames"></datalist>
 <script>
@@ -567,7 +596,8 @@ var TITLES = {
   marketing: ['Marketing','Content Planner'],
   crews: ['Operations','Crews'],
   invoicing: ['Accounts','Invoicing'],
-  tools: ['Field math','Tools']
+  tools: ['Field math','Tools'],
+  import: ['Data','Import Center']
 };
 
 $('nav').addEventListener('click', function(e){
@@ -917,7 +947,7 @@ function renderClients(){
       '</div></td></tr>');
     if(expandedClientId===c.id){
       var activity = (c.activity||[]).slice().reverse();
-      var log = activity.length ? activity.map(function(a){ return '<div style="margin-bottom:6px;font-size:13px;"><b style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted);">'+fmtDate(a.date)+'</b> '+String.fromCharCode(8212)+' '+esc(a.text)+'</div>'; }).join('') : '<p class="note" style="margin:0 0 8px;">No activity logged yet.</p>';
+      var log = activity.length ? activity.map(function(a){ return '<div style="margin-bottom:6px;font-size:13px;"><b style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--muted);">'+fmtDate(a.date)+'</b> '+String.fromCharCode(8212)+' '+esc(a.text)+'</div>'; }).join('') : '<p class="note" style="margin:0 0 8px;">No activity logged yet.</p>';
       rows.push('<tr class="client-detail"><td colspan="7"><div style="padding:8px 0;">'+log+
         '<div style="display:flex;gap:8px;margin-top:8px;">'+
           '<input type="text" id="clientNoteInput" placeholder="Log a call, email, or site visit..." style="flex:1;">'+
@@ -1414,7 +1444,214 @@ $('addInvoice').addEventListener('click', addInvoice);
 ['mpMaterial','mpArea','mpDepth'].forEach(function(id){ $(id).addEventListener('input', calcPricer); });
 ['eaQuote','eaCost','eaEstH','eaActH'].forEach(function(id){ $(id).addEventListener('input', calcEstVsActual); });
 $('mMode').addEventListener('change', syncMFactorVisibility);
+
+var IMPORT_FIELDS = {
+  clients: [
+    {key:'name', label:'Name', required:true, aliases:['name','client','customer','company','client name','customer name']},
+    {key:'addr', label:'Address', required:false, aliases:['address','addr','street','street address']},
+    {key:'phone', label:'Phone', required:false, aliases:['phone','telephone','mobile','phone number']},
+    {key:'email', label:'Email', required:false, aliases:['email','e-mail','email address']},
+    {key:'notes', label:'Notes', required:false, aliases:['notes','note','comments','comment']},
+    {key:'segment', label:'Segment', required:false, aliases:['segment','client type','customer type','type','category']},
+    {key:'source', label:'Lead source', required:false, aliases:['source','lead source','referral','how heard']},
+    {key:'nextFollowUp', label:'Next follow-up date', required:false, aliases:['next follow-up','follow-up date','follow up','followup']}
+  ],
+  jobs: [
+    {key:'client', label:'Client', required:true, aliases:['client','customer','client name','customer name','name']},
+    {key:'type', label:'Job description', required:true, aliases:['job description','description','job type','service','job','type']},
+    {key:'category', label:'Category', required:false, aliases:['service category','category','service type']},
+    {key:'addr', label:'Address', required:false, aliases:['site address','address','addr','location']},
+    {key:'date', label:'Date', required:false, aliases:['service date','job date','scheduled date','date']},
+    {key:'start', label:'Start time', required:false, aliases:['start time','start','time']},
+    {key:'hours', label:'Hours', required:false, aliases:['labor hours','hours','duration']},
+    {key:'value', label:'Job value ($)', required:false, aliases:['job value','value','total','amount','price']}
+  ],
+  invoices: [
+    {key:'client', label:'Client', required:true, aliases:['client','customer','client name','customer name','name']},
+    {key:'amount', label:'Amount', required:true, aliases:['amount','invoice total','invoice amount','total','balance']},
+    {key:'issue', label:'Issue date', required:false, aliases:['invoice date','issue date','created','date']},
+    {key:'due', label:'Due date', required:false, aliases:['due date','due']},
+    {key:'paid', label:'Paid?', required:false, aliases:['paid','payment status','status']}
+  ]
+};
+
+var importData = null;
+
+function parseCSV(text){
+  var rows = []; var row = []; var field = ""; var inQuotes = false; var i = 0; var len = text.length;
+  while(i < len){
+    var ch = text[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      } else { field += ch; i++; continue; }
+    } else {
+      if(ch === '"'){ inQuotes = true; i++; continue; }
+      if(ch === ','){ row.push(field); field=""; i++; continue; }
+      if(ch === "\r"){ i++; continue; }
+      if(ch === "\n"){ row.push(field); rows.push(row); row=[]; field=""; i++; continue; }
+      field += ch; i++; continue;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  while(rows.length && rows[rows.length-1].length===1 && rows[rows.length-1][0]===""){ rows.pop(); }
+  return rows;
+}
+
+function normalizeHeader(h){ return (h||"").toString().trim().toLowerCase(); }
+
+function guessColumn(headers, aliases){
+  var h, a;
+  for(a=0; a<aliases.length; a++){
+    for(h=0; h<headers.length; h++){ if(normalizeHeader(headers[h]) === aliases[a]) return h; }
+  }
+  for(a=0; a<aliases.length; a++){
+    for(h=0; h<headers.length; h++){ if(normalizeHeader(headers[h]).indexOf(aliases[a]) !== -1) return h; }
+  }
+  return -1;
+}
+
+function parseFlexDate(s){
+  s = (s||"").toString().trim();
+  if(!s) return "";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  var d = new Date(s);
+  if(isNaN(d.getTime())) return "";
+  var y = d.getFullYear(); var m = String(d.getMonth()+1); var day = String(d.getDate());
+  if(m.length<2) m = "0"+m; if(day.length<2) day = "0"+day;
+  return y+"-"+m+"-"+day;
+}
+
+function parseFlexNumber(s){
+  s = (s||"").toString().replace(/[^0-9.\-]/g, "");
+  var n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function parseFlexBool(s){
+  s = (s||"").toString().trim().toLowerCase();
+  return ["yes","y","true","1","paid"].indexOf(s) !== -1;
+}
+
+function handleImportFile(){
+  var fileInput = $("impFile");
+  var file = fileInput.files && fileInput.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var rows = parseCSV(e.target.result);
+    if(!rows.length){ $("impSummary").textContent = "That file appears to be empty."; return; }
+    var headers = rows[0];
+    var dataRows = rows.slice(1).filter(function(r){ return r.some(function(v){ return (v||"").trim() !== ""; }); });
+    importData = { type: $("impType").value, headers: headers, rows: dataRows, mapping: {} };
+    var fields = IMPORT_FIELDS[importData.type];
+    fields.forEach(function(f){ importData.mapping[f.key] = guessColumn(headers, f.aliases); });
+    $("impSummary").textContent = "Found " + dataRows.length + " row" + (dataRows.length===1?"":"s") + " and " + headers.length + " column" + (headers.length===1?"":"s") + " in " + file.name + ".";
+    $("impResultCard").style.display = "none";
+    renderImportMapping();
+  };
+  reader.readAsText(file);
+}
+
+function renderImportMapping(){
+  if(!importData) return;
+  var fields = IMPORT_FIELDS[importData.type];
+  var html = "";
+  fields.forEach(function(f){
+    var options = '<option value="-1">-- Skip this field --</option>';
+    importData.headers.forEach(function(h, idx){
+      var sel = (importData.mapping[f.key] === idx) ? " selected" : "";
+      options += "<option value=\""+idx+"\""+sel+">"+esc(h)+"</option>";
+    });
+    html += '<div class="field"><label>'+esc(f.label)+(f.required?" *":"")+'</label><select data-fkey="'+f.key+'" onchange="updateImportMapping(this)">'+options+'</select></div>';
+  });
+  $("impMappingFields").innerHTML = html;
+  $("impMappingCard").style.display = "block";
+  renderImportPreview();
+}
+
+function updateImportMapping(sel){
+  if(!importData) return;
+  importData.mapping[sel.getAttribute("data-fkey")] = Number(sel.value);
+  renderImportPreview();
+}
+
+function renderImportPreview(){
+  if(!importData) return;
+  var fields = IMPORT_FIELDS[importData.type];
+  $("impPreviewHead").innerHTML = fields.map(function(f){ return "<th>"+esc(f.label)+"</th>"; }).join("");
+  var bodyHtml = importData.rows.slice(0,5).map(function(r){
+    return "<tr>" + fields.map(function(f){
+      var idx = importData.mapping[f.key];
+      return "<td>" + esc((idx>=0 && idx<r.length) ? r[idx] : "") + "</td>";
+    }).join("") + "</tr>";
+  }).join("");
+  $("impPreviewBody").innerHTML = bodyHtml || '<tr><td class="empty">No rows found.</td></tr>';
+  $("impPreviewCard").style.display = "block";
+}
+
+function runImport(){
+  if(!importData) return;
+  var fields = IMPORT_FIELDS[importData.type];
+  var required = fields.filter(function(f){ return f.required; });
+  var imported = 0, skipped = 0, merged = 0;
+  importData.rows.forEach(function(r){
+    var rec = {};
+    fields.forEach(function(f){
+      var idx = importData.mapping[f.key];
+      rec[f.key] = (idx>=0 && idx<r.length) ? String(r[idx]).trim() : "";
+    });
+    var ok = true;
+    required.forEach(function(f){ if(!rec[f.key]) ok = false; });
+    if(!ok){ skipped++; return; }
+    if(importData.type === "clients"){
+      var existing = state.clients.filter(function(c){ return c.name.trim().toLowerCase() === rec.name.trim().toLowerCase(); })[0];
+      var target = existing || { id: uid(), name: rec.name, addr:"", phone:"", email:"", notes:"", segment:"", source:"", nextFollowUp:"", activity:[] };
+      target.addr = rec.addr || target.addr;
+      target.phone = rec.phone || target.phone;
+      target.email = rec.email || target.email;
+      target.notes = rec.notes || target.notes;
+      target.segment = rec.segment || target.segment;
+      target.source = rec.source || target.source;
+      target.nextFollowUp = parseFlexDate(rec.nextFollowUp) || target.nextFollowUp;
+      if(existing){ merged++; } else { state.clients.push(target); imported++; }
+    } else if(importData.type === "jobs"){
+      ensureClient(rec.client);
+      state.jobs.push({ id: uid(), client: rec.client, category: rec.category || "Other", crewId: null, type: rec.type, addr: rec.addr || "", date: parseFlexDate(rec.date) || todayISO(), start: rec.start || "", hours: parseFlexNumber(rec.hours), value: parseFlexNumber(rec.value), done: false });
+      imported++;
+    } else if(importData.type === "invoices"){
+      ensureClient(rec.client);
+      var issue = parseFlexDate(rec.issue) || todayISO();
+      var due = parseFlexDate(rec.due) || addDaysISO(issue, 14);
+      state.invoices.push({ id: uid(), jobId: null, client: rec.client, amount: parseFlexNumber(rec.amount), issue: issue, due: due, paid: parseFlexBool(rec.paid), paidDate: null });
+      imported++;
+    }
+  });
+  renderAll();
+  saveState();
+  var msg = "<p>Added <b>" + imported + "</b> new record" + (imported===1?"":"s") + ".";
+  if(merged) msg += " Updated " + merged + " existing client" + (merged===1?"":"s") + " that already had a matching name.";
+  if(skipped) msg += " Skipped " + skipped + " row" + (skipped===1?"":"s") + " missing a required field.";
+  msg += "</p>";
+  $("impResult").innerHTML = msg;
+  $("impResultCard").style.display = "block";
+}
+
+function resetImport(){
+  importData = null;
+  $("impFile").value = "";
+  $("impSummary").textContent = "";
+  $("impMappingCard").style.display = "none";
+  $("impPreviewCard").style.display = "none";
+  $("impResultCard").style.display = "none";
+}
+
 $('addMaterial').addEventListener('click', addMaterial);
+$('impFile').addEventListener('change', handleImportFile);
+$('impType').addEventListener('change', function(){ resetImport(); });
+$('impReset').addEventListener('click', resetImport);
+$('impRun').addEventListener('click', runImport);
 $('addPost').addEventListener('click', addPost);
 
 $('resetData').addEventListener('click', function(){
