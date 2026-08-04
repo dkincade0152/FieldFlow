@@ -144,9 +144,50 @@ body{flex-direction:column;}
 @media (prefers-reduced-motion:reduce){
 *{animation:none !important;transition:none !important;}
 }
+.auth-gate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(900px 600px at 70% -10%, rgba(79,124,255,.18), transparent 60%), rgba(8,11,20,.93);backdrop-filter:blur(10px);}
+.auth-card{width:100%;max-width:400px;background:linear-gradient(180deg, var(--surface2), var(--surface));border:1px solid var(--border2);border-radius:var(--radius);padding:28px;box-shadow:0 30px 70px rgba(0,0,0,.55);}
+.auth-brand{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:.5px;color:var(--ink);}
+.auth-brand em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.auth-tag{margin:2px 0 22px;color:var(--muted2);font-size:11px;letter-spacing:1.6px;text-transform:uppercase;}
+.auth-tabs{display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;}
+.auth-tabs button{flex:1;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;}
+.auth-tabs button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+.auth-l{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2);margin:0 0 6px;}
+.auth-card input{width:100%;padding:11px 12px;margin:0 0 16px;background:rgba(0,0,0,.35);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--ink);font:inherit;font-size:14px;}
+.auth-card input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,124,255,.18);}
+.auth-go{width:100%;padding:12px;border:0;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.auth-go:disabled{opacity:.55;cursor:default;}
+.auth-msg{min-height:18px;margin:12px 0 0;font-size:12.5px;line-height:1.5;color:var(--cyan);}
+.auth-msg.bad{color:var(--bad);}
+.auth-link{display:block;width:100%;margin-top:14px;padding:8px;background:none;border:0;color:var(--muted2);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;}
+.auth-link:hover{color:var(--muted);}
+.acct-who{font-size:12px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acct-sync{font-size:11px;color:var(--muted2);margin-top:2px;}
+.sidebar{max-height:100vh;overflow-y:auto;}
+.sidebar::-webkit-scrollbar{width:8px;}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px;}
 </style>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<div class="auth-gate" id="authGate" style="display:none">
+<div class="auth-card">
+<div class="auth-brand">Field<em>Flow</em></div>
+<p class="auth-tag">Landscaping operations</p>
+<div class="auth-tabs">
+<button type="button" id="authTabIn" class="on" onclick="ffSetMode('in')">Sign in</button>
+<button type="button" id="authTabUp" onclick="ffSetMode('up')">Create account</button>
+</div>
+<label class="auth-l" for="authEmail">Email</label>
+<input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com" onkeydown="ffAuthKey(event)">
+<label class="auth-l" for="authPass">Password</label>
+<input id="authPass" type="password" autocomplete="current-password" placeholder="At least 8 characters" onkeydown="ffAuthKey(event)">
+<button type="button" class="auth-go" id="authGo" onclick="ffAuthSubmit()">Sign in</button>
+<p class="auth-msg" id="authMsg"></p>
+<button type="button" class="auth-link" id="authLocalBtn" onclick="ffLocalOnly()">Continue without an account (saves in this browser only)</button>
+</div>
+</div>
 <aside class="sidebar">
 <div class="brand">
 <div class="brand-mark">Field<em>Flow</em></div>
@@ -165,7 +206,12 @@ body{flex-direction:column;}
 <li><button data-view="import">Import</button></li>
 </ul>
 <div class="sidebar-foot" id="sideStats">
-<button class="ghost" id="resetData" style="margin-top:10px;width:100%;border-color:#4A443C;color:#8C8073;">Reset all data</button>
+<button class="ghost" id="resetData" style="margin-top:10px;width:100%;border-color:var(--border2);color:var(--muted2)">Reset all data</button>
+</div>
+<div class="sidebar-foot" id="ffAccountBox" style="display:none">
+<div class="acct-who" id="ffAcctWho"></div>
+<div class="acct-sync" id="ffAcctSync"></div>
+<button class="ghost" id="ffAcctBtn" style="margin-top:8px;width:100%" onclick="ffAuthAccountAction()">Sign in</button>
 </div>
 </aside>
 
@@ -567,6 +613,7 @@ var STORAGE_KEY = 'fieldflow.savedData.v2';
 function saveState(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
   catch(e){ console.warn('FieldFlow: could not save data', e); }
+  ffQueueCloudSave();
 }
 function loadState(){
   try {
@@ -1657,8 +1704,193 @@ $('addPost').addEventListener('click', addPost);
 $('resetData').addEventListener('click', function(){
   if(!confirm('This permanently clears all clients, jobs, leads, crews, invoices, estimates and tool settings you have entered. Continue?')) return;
   localStorage.removeItem(STORAGE_KEY);
+  if(ffClient && ffUser){
+    ffCloudReady = false;
+    if(ffSaveTimer){ clearTimeout(ffSaveTimer); ffSaveTimer = null; }
+    ffClient.from('app_state').upsert({user_id: ffUser.id, data: {}, updated_at: new Date().toISOString()}).then(function(){ location.reload(); }, function(){ location.reload(); });
+    return;
+  }
   location.reload();
 });
+
+/* ---------- Accounts and cloud sync (Supabase) ---------- */
+var FF_CFG = window.FIELDFLOW_CONFIG || {};
+var LOCAL_ONLY_KEY = 'fieldflow.localOnly';
+var PRECLOUD_KEY = 'fieldflow.preCloudBackup.v2';
+var ffClient = null;
+var ffUser = null;
+var ffCloudReady = false;
+var ffSaveTimer = null;
+var ffMode = 'in';
+var ffLastStatus = '';
+
+function ffConfigured(){
+  return !!(FF_CFG.SUPABASE_URL && FF_CFG.SUPABASE_ANON_KEY && window.supabase && window.supabase.createClient);
+}
+function ffRecordCount(obj){
+  var keys = ['clients','jobs','crews','leads','estimates','invoices','posts'];
+  var n = 0;
+  for(var i=0;i<keys.length;i++){
+    var arr = obj ? obj[keys[i]] : null;
+    if(arr && arr.length) n += arr.length;
+  }
+  return n;
+}
+function ffTime(){
+  try { return new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
+  catch(e){ return ''; }
+}
+function ffRenderAccount(){
+  var box = $('ffAccountBox');
+  if(!box) return;
+  if(!ffConfigured()){ box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  if(ffUser){
+    $('ffAcctWho').textContent = ffUser.email || 'Signed in';
+    $('ffAcctSync').textContent = ffLastStatus || '';
+    $('ffAcctBtn').textContent = 'Sign out';
+  } else {
+    $('ffAcctWho').textContent = 'This browser only';
+    $('ffAcctSync').textContent = 'Not syncing';
+    $('ffAcctBtn').textContent = 'Sign in';
+  }
+}
+function ffStatus(txt){
+  if(txt) ffLastStatus = txt;
+  ffRenderAccount();
+}
+function ffGate(show){
+  var g = $('authGate');
+  if(g) g.style.display = show ? 'flex' : 'none';
+}
+function ffMsg(txt, bad){
+  var el = $('authMsg');
+  if(!el) return;
+  el.textContent = txt || '';
+  el.className = bad ? 'auth-msg bad' : 'auth-msg';
+}
+function ffSetMode(mode){
+  ffMode = mode;
+  $('authTabIn').className = mode === 'in' ? 'on' : '';
+  $('authTabUp').className = mode === 'up' ? 'on' : '';
+  $('authGo').textContent = mode === 'in' ? 'Sign in' : 'Create account';
+  $('authPass').setAttribute('autocomplete', mode === 'in' ? 'current-password' : 'new-password');
+  ffMsg('');
+}
+function ffAuthKey(e){
+  if(e && e.key === 'Enter') ffAuthSubmit();
+}
+function ffNetFail(btn){
+  return function(){
+    if(btn) btn.disabled = false;
+    ffMsg('Could not reach the sign-in service. Check your connection and try again.', true);
+  };
+}
+function ffAuthSubmit(){
+  if(!ffClient) return;
+  var email = ($('authEmail').value || '').trim();
+  var pass = $('authPass').value || '';
+  var btn = $('authGo');
+  if(!email || !pass){ ffMsg('Enter your email and password.', true); return; }
+  if(ffMode === 'up' && pass.length < 8){ ffMsg('Use a password of at least 8 characters.', true); return; }
+  btn.disabled = true;
+  ffMsg(ffMode === 'up' ? 'Creating your account...' : 'Signing in...');
+  if(ffMode === 'up'){
+    ffClient.auth.signUp({email: email, password: pass}).then(function(res){
+      btn.disabled = false;
+      if(res.error){ ffMsg(res.error.message, true); return; }
+      if(res.data && res.data.session && res.data.session.user){ ffSignedIn(res.data.session.user); return; }
+      ffSetMode('in');
+      ffMsg('Account created. Open the confirmation link in your email, then sign in here.');
+    }, ffNetFail(btn));
+  } else {
+    ffClient.auth.signInWithPassword({email: email, password: pass}).then(function(res){
+      btn.disabled = false;
+      if(res.error){ ffMsg(res.error.message, true); return; }
+      ffSignedIn(res.data.user);
+    }, ffNetFail(btn));
+  }
+}
+function ffSignedIn(user){
+  ffUser = user;
+  $('authPass').value = '';
+  ffMsg('');
+  ffGate(false);
+  ffLastStatus = 'Loading your data...';
+  ffRenderAccount();
+  ffPull();
+}
+function ffPull(){
+  ffClient.from('app_state').select('data').eq('user_id', ffUser.id).maybeSingle().then(function(res){
+    if(res.error){ ffStatus('Sync error'); console.warn('FieldFlow: could not load cloud data', res.error); return; }
+    var cloud = (res.data && res.data.data) ? res.data.data : null;
+    if(cloud && ffRecordCount(cloud) > 0){
+      if(ffRecordCount(state) > 0 && !localStorage.getItem(PRECLOUD_KEY)){
+        try { localStorage.setItem(PRECLOUD_KEY, JSON.stringify(state)); } catch(e){}
+      }
+      for(var k in cloud){ if(Object.prototype.hasOwnProperty.call(cloud, k)) state[k] = cloud[k]; }
+      ffCloudReady = true;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+      renderAll();
+      ffStatus('Synced ' + ffTime());
+    } else {
+      ffCloudReady = true;
+      ffPush();
+    }
+  }, function(){ ffStatus('Sync error'); });
+}
+function ffPush(){
+  if(!ffClient || !ffUser) return;
+  ffClient.from('app_state').upsert({user_id: ffUser.id, data: state, updated_at: new Date().toISOString()}).then(function(res){
+    if(res.error){ ffStatus('Sync error'); console.warn('FieldFlow: could not save to cloud', res.error); return; }
+    ffStatus('Synced ' + ffTime());
+  }, function(){ ffStatus('Sync error'); });
+}
+function ffQueueCloudSave(){
+  if(!ffCloudReady) return;
+  ffStatus('Saving...');
+  if(ffSaveTimer) clearTimeout(ffSaveTimer);
+  ffSaveTimer = setTimeout(function(){ ffSaveTimer = null; ffPush(); }, 1000);
+}
+function ffAuthAccountAction(){
+  if(!ffUser){
+    try { localStorage.removeItem(LOCAL_ONLY_KEY); } catch(e){}
+    ffMsg('');
+    ffGate(true);
+    return;
+  }
+  if(!confirm('Sign out of FieldFlow? Your data stays saved in your account, and the copy in this browser is cleared.')) return;
+  if(ffSaveTimer){ clearTimeout(ffSaveTimer); ffSaveTimer = null; }
+  ffStatus('Saving...');
+  var stayIn = function(){
+    ffStatus('Sync error');
+    alert('Could not save your latest changes, so you are still signed in. Check your connection and try again.');
+  };
+  ffClient.from('app_state').upsert({user_id: ffUser.id, data: state, updated_at: new Date().toISOString()}).then(function(res){
+    if(res.error){ stayIn(); return; }
+    ffClient.auth.signOut().then(function(){
+      try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+      location.reload();
+    }, function(){ location.reload(); });
+  }, stayIn);
+}
+function ffLocalOnly(){
+  try { localStorage.setItem(LOCAL_ONLY_KEY, '1'); } catch(e){}
+  ffGate(false);
+  ffRenderAccount();
+}
+function ffAuthInit(){
+  if(!ffConfigured()){ ffRenderAccount(); return; }
+  ffClient = window.supabase.createClient(FF_CFG.SUPABASE_URL, FF_CFG.SUPABASE_ANON_KEY);
+  ffSetMode('in');
+  ffRenderAccount();
+  if(!localStorage.getItem(LOCAL_ONLY_KEY)) ffGate(true);
+  ffClient.auth.getSession().then(function(res){
+    var session = (res && res.data) ? res.data.session : null;
+    if(session && session.user){ ffSignedIn(session.user); return; }
+    ffRenderAccount();
+  }, function(){ ffMsg('Could not reach the sign-in service. Check your connection and try again.', true); });
+}
 
 loadState();
 currentScheduleDate = todayISO();
@@ -1667,6 +1899,7 @@ fillCategorySelect();
 syncMFactorVisibility();
 renderAll();
 syncDepthField();
+ffAuthInit();
 </script>
 </body>
 </html>
