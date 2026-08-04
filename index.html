@@ -114,6 +114,8 @@ tr:last-child td{border-bottom:0;}
 .tag.paid{background:rgba(92,114,71,.16);color:var(--moss);}
 .tag.overdue{background:rgba(255,90,31,.16);color:var(--paint);}
 .tag.unpaid{background:rgba(140,128,115,.2);color:var(--soil);}
+.tag.info{background:rgba(140,128,115,.16);color:var(--soil);}
+.client-detail td{background:rgba(140,128,115,.06);}
 .dateNav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .dateNav b{font-family:'Barlow Condensed',sans-serif;font-size:18px;text-transform:uppercase;}
 .section-sub{color:var(--muted);font-size:13px;margin:-8px 0 16px;}
@@ -142,6 +144,7 @@ body{flex-direction:column;}
 <li><button data-view="clients">Clients</button></li>
 <li><button data-view="estimates">Estimates</button></li>
 <li><button data-view="pipeline">Pipeline</button></li>
+<li><button data-view="marketing">Marketing</button></li>
 <li><button data-view="crews">Crews</button></li>
 <li><button data-view="invoicing">Invoicing</button></li>
 <li><button data-view="tools">Tools</button></li>
@@ -243,6 +246,11 @@ body{flex-direction:column;}
 <div class="field"><label for="cEmail">Email</label><input type="text" id="cEmail" placeholder="name@example.com"></div>
 </div>
 <div class="field"><label for="cNotes">Notes</label><input type="text" id="cNotes" placeholder="Gate code, dog on site, billing preference"></div>
+<div class="inline">
+<div class="field"><label for="cSegment">Segment</label><select id="cSegment"><option value="">Select...</option><option value="Residential">Residential</option><option value="Commercial">Commercial</option><option value="Municipal">Municipal</option><option value="Other">Other</option></select></div>
+<div class="field"><label for="cSource">Lead source</label><input type="text" id="cSource" placeholder="Referral, website, yard sign"></div>
+</div>
+<div class="field"><label for="cFollowUp">Next follow-up</label><input type="date" id="cFollowUp"></div>
 <div style="display:flex;gap:8px;">
 <button class="act" id="addClient">Save client</button>
 <button class="ghost" id="cancelClientEdit" style="display:none;">Cancel edit</button>
@@ -250,7 +258,7 @@ body{flex-direction:column;}
 </div>
 <div class="card">
 <p class="card-title">Client directory</p>
-<table><thead><tr><th>Name</th><th>Contact</th><th class="n">Jobs</th><th class="n">Billed</th><th></th></tr></thead><tbody id="clientRows"></tbody></table>
+<table><thead><tr><th>Name</th><th>Contact</th><th>Segment</th><th class="n">Jobs</th><th class="n">Billed</th><th>Follow-up</th><th></th></tr></thead><tbody id="clientRows"></tbody></table>
 </div>
 </div>
 </section>
@@ -322,6 +330,32 @@ body{flex-direction:column;}
 </div>
 </div>
 <div class="board" id="board"></div>
+</section>
+
+<section class="view" id="view-marketing">
+<div class="card" style="margin-bottom:14px;">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+<div>
+<p class="card-title" style="margin:0 0 4px;">Posts in progress</p>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="postTotal">0</p>
+</div>
+<p class="note" style="margin:0;max-width:360px;">Click a post to move it to the next stage. This is a planner, not an auto-poster — use Copy to grab the caption text, then paste and publish it on the platform yourself.</p>
+</div>
+</div>
+<div class="grid two" style="margin-bottom:14px;">
+<div class="card">
+<p class="card-title">Add a post</p>
+<div class="field"><label for="pPlatform">Platform</label><select id="pPlatform"><option>Instagram</option><option>Facebook</option><option>Google Business</option><option>X / Twitter</option><option>Nextdoor</option><option>Email newsletter</option><option>Other</option></select></div>
+<div class="field"><label for="pCaption">Caption / copy</label><textarea id="pCaption" rows="4" placeholder="Write the post copy here..."></textarea></div>
+<div class="field"><label for="pDate">Target date</label><input type="date" id="pDate"></div>
+<button class="act" id="addPost">Add post</button>
+</div>
+<div class="card">
+<p class="card-title">How this works</p>
+<p class="note" style="margin:0;">Posts move through Idea → Drafted → Scheduled → Posted as you click each card. Nothing here publishes automatically to any platform.</p>
+</div>
+</div>
+<div class="board" id="postBoard"></div>
 </section>
 
 <section class="view" id="view-crews">
@@ -433,6 +467,7 @@ var state = {
   leads: [],
   estimates: [],
   invoices: [],
+  posts: [],
   materials: [
     {name:'Hardwood mulch', mode:'volume-yd', unit:'cu yd', price:42},
     {name:'Dyed black mulch', mode:'volume-yd', unit:'cu yd', price:54},
@@ -448,6 +483,8 @@ var state = {
 
 var CATEGORIES = ['Maintenance','Mulch & Bed Work','Hardscape / Stone','Cleanup','Turf Treatment','Other'];
 var STAGES = ['New','Contacted','Estimated','Won'];
+var POST_STATUSES = ['Idea','Drafted','Scheduled','Posted'];
+var expandedClientId = null;
 var editingClientId = null;
 var currentScheduleDate = null;
 
@@ -502,7 +539,7 @@ function ensureClient(name){
   if(!name) return null;
   var found = state.clients.filter(function(c){ return c.name.trim().toLowerCase() === name.toLowerCase(); })[0];
   if(found) return found;
-  var c = {id:uid(), name:name, addr:'', phone:'', email:'', notes:''};
+  var c = {id:uid(), name:name, addr:'', phone:'', email:'', notes:'', segment:'', source:'', nextFollowUp:'', activity:[]};
   state.clients.push(c);
   return c;
 }
@@ -513,6 +550,7 @@ var TITLES = {
   clients: ['Accounts','Clients'],
   estimates: ['Sales','Estimate Builder'],
   pipeline: ['Sales','Leads Pipeline'],
+  marketing: ['Marketing','Content Planner'],
   crews: ['Operations','Crews'],
   invoicing: ['Accounts','Invoicing'],
   tools: ['Field math','Tools']
@@ -673,6 +711,19 @@ function renderAlerts(){
       if(d2 > 14) list.push({what: l.name + ' has been in the pipeline for ' + d2 + ' days without progress', amt:'—'});
     }
   });
+  state.clients.forEach(function(cl){
+    if(cl.nextFollowUp && cl.nextFollowUp <= today){
+      var lateFU = cl.nextFollowUp < today;
+      list.push({what: 'Follow up with ' + cl.name + (lateFU ? ' (overdue)' : ' (due today)'), amt:String.fromCharCode(8212)});
+    }
+  });
+  state.posts.forEach(function(p){
+    if(p.status < POST_STATUSES.length-1 && p.date && p.date <= today){
+      var lateP = p.date < today;
+      var capPreview = p.caption.length>30 ? p.caption.slice(0,30)+'...' : p.caption;
+      list.push({what: p.platform + ' post "' + capPreview + '" ' + (lateP ? 'is overdue to post' : 'is due today'), amt:String.fromCharCode(8212)});
+    }
+  });
   var unassignedToday = state.jobs.filter(function(j){ return j.date===today && !j.crewId; }).length;
   if(unassignedToday>0) list.push({what: unassignedToday + ' job' + (unassignedToday===1?'':'s') + ' today with no crew assigned', amt:'—'});
 
@@ -783,17 +834,17 @@ function renderUnassigned(){
 function addClient(){
   var name = $('cName').value.trim();
   if(!name){ alert('Enter a client name.'); return; }
-  var data = {name:name, addr:$('cAddr').value.trim(), phone:$('cPhone').value.trim(), email:$('cEmail').value.trim(), notes:$('cNotes').value.trim()};
+  var data = {name:name, addr:$('cAddr').value.trim(), phone:$('cPhone').value.trim(), email:$('cEmail').value.trim(), notes:$('cNotes').value.trim(), segment:$('cSegment').value, source:$('cSource').value.trim(), nextFollowUp:$('cFollowUp').value};
   if(editingClientId){
     var c = state.clients.filter(function(x){ return x.id===editingClientId; })[0];
-    if(c){ c.name=data.name; c.addr=data.addr; c.phone=data.phone; c.email=data.email; c.notes=data.notes; }
+    if(c){ c.name=data.name; c.addr=data.addr; c.phone=data.phone; c.email=data.email; c.notes=data.notes; c.segment=data.segment; c.source=data.source; c.nextFollowUp=data.nextFollowUp; }
     editingClientId = null;
     $('clientFormTitle').textContent = 'Add a client';
     $('cancelClientEdit').style.display = 'none';
   } else {
-    state.clients.push(Object.assign({id:uid()}, data));
+    state.clients.push(Object.assign({id:uid(), activity:[]}, data));
   }
-  ['cName','cAddr','cPhone','cEmail','cNotes'].forEach(function(id){ $(id).value=''; });
+  ['cName','cAddr','cPhone','cEmail','cNotes','cSegment','cSource','cFollowUp'].forEach(function(id){ $(id).value=''; });
   renderAll();
   saveState();
 }
@@ -801,7 +852,7 @@ function editClient(id){
   var c = state.clients.filter(function(x){ return x.id===id; })[0];
   if(!c) return;
   editingClientId = id;
-  $('cName').value=c.name; $('cAddr').value=c.addr||''; $('cPhone').value=c.phone||''; $('cEmail').value=c.email||''; $('cNotes').value=c.notes||'';
+  $('cName').value=c.name; $('cAddr').value=c.addr||''; $('cPhone').value=c.phone||''; $('cEmail').value=c.email||''; $('cNotes').value=c.notes||''; $('cSegment').value=c.segment||''; $('cSource').value=c.source||''; $('cFollowUp').value=c.nextFollowUp||'';
   $('clientFormTitle').textContent = 'Edit client';
   $('cancelClientEdit').style.display = 'inline-block';
   window.scrollTo(0,0);
@@ -821,18 +872,62 @@ function deleteClient(id){
 
 function renderClients(){
   if(!state.clients.length){
-    $('clientRows').innerHTML = '<tr><td class="empty">No clients yet. Add your first one on the left.</td></tr>';
+    $('clientRows').innerHTML = '<tr><td colspan="7" class="empty">No clients yet. Add your first one on the left.</td></tr>';
     return;
   }
-  $('clientRows').innerHTML = state.clients.map(function(c){
+  var today = todayISO();
+  var rows = [];
+  state.clients.forEach(function(c){
     var jobsCount = state.jobs.filter(function(j){ return j.client.trim().toLowerCase()===c.name.trim().toLowerCase(); }).length;
-    var billed = state.invoices.filter(function(i){ return i.client.trim().toLowerCase()===c.name.trim().toLowerCase() && i.paid; }).reduce(function(s,i){ return s+(Number(i.amount)||0); },0);
-    var contact = [c.phone, c.email].filter(Boolean).map(esc).join('<br>');
-    return '<tr><td>'+esc(c.name)+(c.addr?('<br><span style="color:var(--muted);font-size:12px;">'+esc(c.addr)+'</span>'):'')+'</td>'+
-      '<td>'+(contact||'<span style="color:var(--muted);">—</span>')+'</td>'+
-      '<td class="n">'+jobsCount+'</td><td class="n">'+money0(billed)+'</td>'+
-      '<td><div class="row-actions"><button class="ghost" onclick="editClient('+c.id+')">Edit</button><button class="ghost" onclick="deleteClient('+c.id+')">Delete</button></div></td></tr>';
-  }).join('');
+    var billed = state.invoices.filter(function(i){ return i.client.trim().toLowerCase()===c.name.trim().toLowerCase() && i.paid; }).reduce(function(s2,i){ return s2+(Number(i.amount)||0); },0);
+    var contactBits = [];
+    if(c.phone) contactBits.push('<a href="tel:'+esc(c.phone)+'" style="color:inherit;">'+esc(c.phone)+'</a>');
+    if(c.email) contactBits.push('<a href="mailto:'+esc(c.email)+'" style="color:inherit;">'+esc(c.email)+'</a>');
+    var contact = contactBits.length ? contactBits.join('<br>') : '<span style="color:var(--muted);">'+String.fromCharCode(8212)+'</span>';
+    var segment = c.segment ? '<span class="tag info">'+esc(c.segment)+'</span>' : '<span style="color:var(--muted);">'+String.fromCharCode(8212)+'</span>';
+    var followUp = '<span style="color:var(--muted);">'+String.fromCharCode(8212)+'</span>';
+    if(c.nextFollowUp){
+      var late = c.nextFollowUp < today;
+      followUp = '<span class="tag'+(late?' overdue':'')+'">'+fmtDate(c.nextFollowUp)+'</span>';
+    }
+    rows.push('<tr><td>'+esc(c.name)+(c.addr?('<br><span style="color:var(--muted);font-size:12px;">'+esc(c.addr)+'</span>'):'')+'</td>'+
+      '<td>'+contact+'</td>'+
+      '<td>'+segment+'</td>'+
+      '<td class="n">'+jobsCount+'</td>'+
+      '<td class="n">'+money0(billed)+'</td>'+
+      '<td>'+followUp+'</td>'+
+      '<td><div class="row-actions">'+
+        '<button class="ghost" onclick="toggleClientLog('+c.id+')">Log</button>'+
+        '<button class="ghost" onclick="editClient('+c.id+')">Edit</button>'+
+        '<button class="ghost" onclick="deleteClient('+c.id+')">Delete</button>'+
+      '</div></td></tr>');
+    if(expandedClientId===c.id){
+      var activity = (c.activity||[]).slice().reverse();
+      var log = activity.length ? activity.map(function(a){ return '<div style="margin-bottom:6px;font-size:13px;"><b style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted);">'+fmtDate(a.date)+'</b> '+String.fromCharCode(8212)+' '+esc(a.text)+'</div>'; }).join('') : '<p class="note" style="margin:0 0 8px;">No activity logged yet.</p>';
+      rows.push('<tr class="client-detail"><td colspan="7"><div style="padding:8px 0;">'+log+
+        '<div style="display:flex;gap:8px;margin-top:8px;">'+
+          '<input type="text" id="clientNoteInput" placeholder="Log a call, email, or site visit..." style="flex:1;">'+
+          '<button class="act" onclick="addClientNote('+c.id+')">Add note</button>'+
+        '</div></div></td></tr>');
+    }
+  });
+  $('clientRows').innerHTML = rows.join('');
+}
+function toggleClientLog(id){
+  expandedClientId = (expandedClientId===id) ? null : id;
+  renderClients();
+}
+function addClientNote(id){
+  var input = $('clientNoteInput');
+  if(!input) return;
+  var text = input.value.trim();
+  if(!text) return;
+  var c = state.clients.filter(function(x){ return x.id===id; })[0];
+  if(!c) return;
+  if(!c.activity) c.activity = [];
+  c.activity.push({date: todayISO(), text: text});
+  renderAll();
+  saveState();
 }
 
 function modeLabel(mode){
@@ -986,7 +1081,8 @@ function advanceLead(id){
     lead.stage++;
   } else {
     state.leads = state.leads.filter(function(l){ return l.id!==id; });
-    ensureClient(lead.name);
+    var wonClient = ensureClient(lead.name);
+    if(wonClient && !wonClient.source) wonClient.source = lead.src;
     state.jobs.push({id:uid(), client:lead.name, category:'Other', crewId:null, type:'New client, won lead', addr:'', date:todayISO(), start:'', hours:0, value:lead.value, done:true});
   }
   renderAll();
@@ -1191,6 +1287,51 @@ function renderMaterials(){
   }).join('');
 }
 
+function addPost(){
+  var platform = $('pPlatform').value;
+  var caption = $('pCaption').value.trim();
+  var date = $('pDate').value;
+  if(!caption){ alert('Write the post caption first.'); return; }
+  state.posts.push({id:uid(), platform:platform, caption:caption, date:date, status:0});
+  $('pCaption').value=''; $('pDate').value='';
+  renderAll();
+  saveState();
+}
+function deletePost(id){
+  state.posts = state.posts.filter(function(p){ return p.id!==id; });
+  renderAll();
+  saveState();
+}
+function advancePost(id){
+  var post = state.posts.filter(function(p){ return p.id===id; })[0];
+  if(!post) return;
+  if(post.status < POST_STATUSES.length-1){ post.status++; }
+  renderAll();
+  saveState();
+}
+function copyCaption(id){
+  var post = state.posts.filter(function(p){ return p.id===id; })[0];
+  if(!post) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(post.caption).then(function(){ alert('Caption copied. Paste it into ' + post.platform + ' to publish.'); });
+  }
+}
+function renderPostBoard(){
+  $('postBoard').innerHTML = POST_STATUSES.map(function(status, si){
+    var inStage = state.posts.filter(function(p){ return p.status===si; });
+    var cards = inStage.length ? inStage.map(function(p){
+      var capText = esc(p.caption);
+      var preview = capText.length>70 ? capText.slice(0,70)+'...' : capText;
+      return '<div class="lead" tabindex="0" onclick="advancePost('+p.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();advancePost('+p.id+');}">'+
+        '<button class="del" onclick="event.stopPropagation();deletePost('+p.id+')">'+String.fromCharCode(215)+'</button>'+
+        '<h4>'+esc(p.platform)+'</h4><div class="src">'+(p.date?fmtDate(p.date):'No date set')+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin:6px 0;line-height:1.4;">'+preview+'</div>'+
+        '<button class="ghost" style="font-size:11px;padding:4px 8px;" onclick="event.stopPropagation();copyCaption('+p.id+')">Copy caption</button></div>';
+    }).join('') : '<div class="col-empty">Nothing here</div>';
+    return '<div><div class="col-head"><h3>'+esc(status)+'</h3><span class="col-sum">'+inStage.length+'</span></div>'+cards+'</div>';
+  }).join('');
+  $('postTotal').textContent = state.posts.filter(function(p){ return p.status<POST_STATUSES.length-1; }).length;
+}
 function renderSideStats(){
   var today = todayISO();
   var jobsToday = state.jobs.filter(function(j){ return j.date===today; }).length;
@@ -1222,6 +1363,7 @@ function renderAll(){
   renderSavedEstimates();
   renderBoard();
   renderStaleLeads();
+  renderPostBoard();
   renderCrews();
   renderInvoices();
   renderMaterials();
@@ -1259,6 +1401,7 @@ $('addInvoice').addEventListener('click', addInvoice);
 ['eaQuote','eaCost','eaEstH','eaActH'].forEach(function(id){ $(id).addEventListener('input', calcEstVsActual); });
 $('mMode').addEventListener('change', syncMFactorVisibility);
 $('addMaterial').addEventListener('click', addMaterial);
+$('addPost').addEventListener('click', addPost);
 
 $('resetData').addEventListener('click', function(){
   if(!confirm('This permanently clears all clients, jobs, leads, crews, invoices, estimates and tool settings you have entered. Continue?')) return;
