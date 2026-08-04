@@ -1,1022 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FieldFlow — Landscaping Operations</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-<style>
-/* =========================================================
-   1. TOKENS
-   ========================================================= */
-:root{
-  --ink:    #1C1916;
-  --paper:  #E4E2DC;
-  --card:   #F2F1ED;
-  --paint:  #FF5A1F;
-  --bark:   #4A3B2A;
-  --soil:   #8C8073;
-  --moss:   #5C7247;
-  --line:   #C9C6BD;
-  --muted:  #6E695F;
-  --radius: 3px;
-}
-
-*{box-sizing:border-box;}
-html,body{height:100%;}
-body{
-  margin:0;
-  background:var(--paper);
-  color:var(--ink);
-  font-family:'Barlow',system-ui,sans-serif;
-  display:flex;
-}
-
-/* =========================================================
-   2. SIDEBAR
-   ========================================================= */
-.sidebar{
-  width:212px;
-  flex-shrink:0;
-  background:var(--ink);
-  color:var(--paper);
-  padding:24px 0;
-  display:flex;
-  flex-direction:column;
-  min-height:100vh;
-}
-.brand{padding:0 22px 26px;}
-.brand-mark{
-  font-family:'Barlow Condensed',sans-serif;
-  font-weight:700;font-size:26px;letter-spacing:.02em;
-  text-transform:uppercase;line-height:1;
-}
-.brand-mark em{color:var(--paint);font-style:normal;}
-.brand-sub{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:#8C8073;margin-top:5px;
-}
-.nav{list-style:none;margin:0;padding:0;}
-.nav button{
-  width:100%;text-align:left;
-  background:none;border:0;border-left:3px solid transparent;
-  color:#B8B2A6;cursor:pointer;
-  padding:11px 22px;
-  font-family:'Barlow Condensed',sans-serif;
-  font-weight:600;font-size:15px;letter-spacing:.07em;text-transform:uppercase;
-}
-.nav button:hover{color:var(--paper);background:#262220;}
-.nav button.on{color:var(--paper);border-left-color:var(--paint);background:#262220;}
-.nav button:focus-visible{outline:2px solid var(--paint);outline-offset:-2px;}
-
-.sidebar-foot{
-  margin-top:auto;padding:20px 22px 0;
-  border-top:1px solid #332E2A;
-  font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7A7368;line-height:1.7;
-}
-
-/* =========================================================
-   3. WORKSPACE
-   ========================================================= */
-.main{flex:1;min-width:0;padding:28px 32px 60px;overflow-x:hidden;}
-
-.topbar{
-  display:flex;justify-content:space-between;align-items:flex-end;
-  gap:16px;flex-wrap:wrap;margin-bottom:26px;
-}
-.eyebrow{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--paint);margin:0 0 4px;
-}
-h1{
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;
-  font-size:36px;line-height:1;text-transform:uppercase;margin:0;
-}
-.weather{
-  font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);
-  text-align:right;line-height:1.7;
-}
-
-.view{display:none;}
-.view.on{display:block;}
-
-/* --- cards --- */
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:18px;
-}
-.card-title{
-  font-family:'Barlow Condensed',sans-serif;
-  font-weight:600;font-size:14px;letter-spacing:.09em;text-transform:uppercase;
-  margin:0 0 14px;color:var(--muted);
-}
-
-.grid{display:grid;gap:14px;}
-.kpis{grid-template-columns:repeat(auto-fit,minmax(168px,1fr));margin-bottom:14px;}
-.two{grid-template-columns:1.45fr 1fr;}
-.tools-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
-
-.kpi .num{
-  font-family:'IBM Plex Mono',monospace;font-weight:500;
-  font-size:31px;line-height:1;margin:0;
-}
-.kpi .lbl{
-  font-family:'Barlow Condensed',sans-serif;font-size:12px;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:7px 0 0;
-}
-.delta{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-left:7px;}
-.up{color:var(--moss);} .down{color:var(--paint);}
-
-/* --- chart --- */
-.chart{width:100%;height:190px;display:block;}
-.chart text{
-  font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--muted);
-}
-
-/* --- route timeline (signature) --- */
-.route{position:relative;padding-left:56px;}
-.route::before{
-  content:'';position:absolute;left:47px;top:6px;bottom:6px;
-  width:1px;background:var(--line);
-}
-.stop{position:relative;margin-bottom:10px;}
-.stop-time{
-  position:absolute;left:-56px;top:9px;width:42px;text-align:right;
-  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);
-}
-.stop-dot{
-  position:absolute;left:-10px;top:13px;width:9px;height:9px;border-radius:50%;
-  background:var(--paper);border:2px solid var(--soil);
-}
-.stop.done .stop-dot{background:var(--moss);border-color:var(--moss);}
-.stop-body{
-  background:var(--card);border:1px solid var(--line);border-left:3px solid var(--soil);
-  border-radius:var(--radius);padding:10px 12px;
-  display:flex;justify-content:space-between;align-items:center;gap:12px;
-}
-.stop.done .stop-body{border-left-color:var(--moss);opacity:.62;}
-.stop-body h4{
-  margin:0;font-family:'Barlow Condensed',sans-serif;
-  font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;
-}
-.stop.done h4{text-decoration:line-through;}
-.stop-meta{font-size:13px;color:var(--muted);margin-top:2px;}
-.stop-right{text-align:right;flex-shrink:0;}
-.stop-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;}
-
-/* --- pipeline --- */
-.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-.col-head{
-  display:flex;justify-content:space-between;align-items:baseline;
-  padding-bottom:8px;margin-bottom:10px;border-bottom:2px solid var(--ink);
-}
-.col-head h3{
-  margin:0;font-family:'Barlow Condensed',sans-serif;
-  font-size:14px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
-}
-.col-sum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
-.lead{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:11px;margin-bottom:9px;cursor:pointer;
-  transition:transform .12s ease,border-color .12s ease;
-}
-.lead:hover{transform:translateX(2px);border-color:var(--paint);}
-.lead:focus-visible{outline:2px solid var(--paint);outline-offset:1px;}
-.lead h4{
-  margin:0 0 3px;font-family:'Barlow Condensed',sans-serif;
-  font-size:16px;font-weight:600;text-transform:uppercase;
-}
-.lead .src{font-size:12px;color:var(--muted);}
-.lead .amt{
-  font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;
-  display:block;margin-top:6px;
-}
-.col-empty{
-  border:1px dashed var(--line);border-radius:var(--radius);
-  padding:16px 11px;font-size:13px;color:var(--muted);text-align:center;
-}
-
-/* --- forms --- */
-label{
-  display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;
-  font-size:13px;letter-spacing:.07em;text-transform:uppercase;
-  margin:0 0 5px;color:var(--muted);
-}
-input,select{
-  width:100%;padding:8px 10px;
-  border:1px solid var(--line);border-radius:var(--radius);
-  background:#fff;color:var(--ink);
-  font-family:'IBM Plex Mono',monospace;font-size:14px;
-}
-input:focus,select:focus{outline:2px solid var(--paint);outline-offset:1px;}
-.field{margin-bottom:13px;}
-.inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-
-button.act{
-  background:var(--paint);color:#fff;border:0;border-radius:var(--radius);
-  padding:10px 16px;cursor:pointer;
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;
-  font-size:14px;letter-spacing:.08em;text-transform:uppercase;
-}
-button.act:hover{background:#E64A12;}
-button.act:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
-button.ghost{
-  background:none;border:1px solid var(--line);color:var(--muted);
-  border-radius:var(--radius);padding:5px 10px;cursor:pointer;
-  font-family:'Barlow Condensed',sans-serif;font-weight:600;
-  font-size:12px;letter-spacing:.07em;text-transform:uppercase;
-}
-button.ghost:hover{border-color:var(--paint);color:var(--paint);}
-
-/* --- tables --- */
-table{width:100%;border-collapse:collapse;}
-th{
-  text-align:left;font-family:'Barlow Condensed',sans-serif;
-  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-  padding:0 0 7px;border-bottom:1px solid var(--line);font-weight:600;
-}
-td{
-  padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;
-}
-td.n,th.n{text-align:right;font-family:'IBM Plex Mono',monospace;}
-tr:last-child td{border-bottom:0;}
-
-.totals{border-top:2px solid var(--ink);margin-top:14px;padding-top:12px;}
-.trow{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;}
-.trow span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:500;}
-.trow.grand{
-  font-family:'Barlow Condensed',sans-serif;font-size:20px;
-  font-weight:700;text-transform:uppercase;letter-spacing:.04em;
-  padding-top:10px;margin-top:6px;border-top:1px solid var(--line);
-}
-.trow.grand span:last-child{font-family:'IBM Plex Mono',monospace;font-size:22px;}
-
-.empty{color:var(--muted);font-size:14px;padding:14px 0;}
-.note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;}
-.readout{
-  font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;
-  margin:14px 0 0;
-}
-.readout small{
-  display:block;font-family:'Barlow Condensed',sans-serif;font-size:12px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;
-}
-
-/* --- crew utilization bars --- */
-.util{margin-bottom:13px;}
-.util-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
-.util-top b{font-family:'Barlow Condensed',sans-serif;font-size:15px;text-transform:uppercase;letter-spacing:.03em;}
-.util-top span{font-family:'IBM Plex Mono',monospace;color:var(--muted);}
-.bar{height:7px;background:#D6D3CB;border-radius:99px;overflow:hidden;}
-.bar i{display:block;height:100%;background:var(--moss);}
-.bar i.hot{background:var(--paint);}
-
-@media (max-width:900px){
-  .two,.board{grid-template-columns:1fr;}
-  body{flex-direction:column;}
-  .sidebar{width:100%;min-height:0;flex-direction:column;padding:16px 0 0;}
-  .nav{display:flex;overflow-x:auto;}
-  .nav button{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;padding:10px 16px;}
-  .nav button.on{border-left:0;border-bottom-color:var(--paint);}
-  .sidebar-foot{display:none;}
-  .main{padding:20px 16px 40px;}
-}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
-</style>
-</head>
-
-<body>
-
-<!-- ========================= SIDEBAR ========================= -->
-<aside class="sidebar">
-  <div class="brand">
-    <div class="brand-mark">Field<em>Flow</em></div>
-    <div class="brand-sub">Ops · Aug 2026</div>
-  </div>
-  <ul class="nav" id="nav">
-    <li><button data-view="overview" class="on">Overview</button></li>
-    <li><button data-view="schedule">Schedule</button></li>
-    <li><button data-view="estimates">Estimates</button></li>
-    <li><button data-view="pipeline">Pipeline</button></li>
-    <li><button data-view="tools">Tools</button></li>
-  </ul>
-  <div class="sidebar-foot">
-    3 crews active<br>
-    11 open jobs<br>
-    Next invoice run: Fri<br>
-<button class="ghost" id="resetData" style="margin-top:10px;width:100%;border-color:#4A443C;color:#8C8073;">Reset sample data</button>
-</div>
-</aside>
-
-<!-- ========================= MAIN ========================= -->
-<main class="main">
-
-  <div class="topbar">
-    <div>
-      <p class="eyebrow" id="crumb">Dashboard</p>
-      <h1 id="viewTitle">Overview</h1>
-    </div>
-    <div class="weather">
-      Mon Aug 3 · 84°F, clear<br>
-      Tue: 30% rain — hold seeding
-    </div>
-  </div>
-
-  <!-- ---------- OVERVIEW ---------- -->
-  <section class="view on" id="view-overview">
-    <div class="grid kpis" id="kpis"></div>
-
-    <div class="grid two">
-      <div class="card">
-        <p class="card-title">Revenue — last 8 weeks</p>
-        <svg class="chart" id="chart" viewBox="0 0 640 190" preserveAspectRatio="none" role="img" aria-label="Weekly revenue bar chart"></svg>
-      </div>
-
-      <div class="card">
-        <p class="card-title">Crew utilization</p>
-        <div id="utilList"></div>
-        <p class="note">Target is 80–90%. Above that you're burning overtime; below it you're paying for idle trucks.</p>
-      </div>
-    </div>
-
-    <div class="grid two" style="margin-top:14px;">
-      <div class="card">
-        <p class="card-title">Revenue by service line — MTD</p>
-        <table>
-          <thead><tr><th>Service</th><th class="n">Jobs</th><th class="n">Revenue</th><th class="n">Margin</th></tr></thead>
-          <tbody id="serviceRows"></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <p class="card-title">Needs attention</p>
-        <table>
-          <tbody id="alertRows"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- ---------- SCHEDULE ---------- -->
-  <section class="view" id="view-schedule">
-    <div class="grid two">
-      <div>
-        <div class="card" style="margin-bottom:14px;">
-          <p class="card-title">Today's route — Crew A</p>
-          <div class="route" id="route"></div>
-        </div>
-      </div>
-      <div>
-        <div class="card" style="margin-bottom:14px;">
-          <p class="card-title">Day totals</p>
-          <p class="readout" id="dayBooked">$0<small>Booked today</small></p>
-          <p class="readout" id="dayDone">$0<small>Completed</small></p>
-          <p class="readout" id="dayHours">0.0 h<small>Field hours scheduled</small></p>
-          <p class="note">Click any stop to mark it complete. Completed work rolls into revenue on the Overview tab.</p>
-        </div>
-        <div class="card">
-          <p class="card-title">Unassigned this week</p>
-          <table><tbody id="unassigned"></tbody></table>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ---------- ESTIMATES ---------- -->
-  <section class="view" id="view-estimates">
-    <div class="grid two">
-      <div class="card">
-        <p class="card-title">Build a line item</p>
-
-        <div class="field">
-          <label for="client">Client</label>
-          <input type="text" id="client" value="Novak — 14 Ridge Rd" style="font-family:'Barlow',sans-serif;">
-        </div>
-
-        <div class="field">
-          <label for="material">Material</label>
-          <select id="material"></select>
-        </div>
-
-        <div class="inline">
-          <div class="field">
-            <label for="area">Area (sq ft)</label>
-            <input type="number" id="area" value="500" min="0" step="10">
-          </div>
-          <div class="field" id="depthWrap">
-            <label for="depth">Depth (in)</label>
-            <input type="number" id="depth" value="3" min="0.5" max="12" step="0.5">
-          </div>
-        </div>
-
-        <div class="inline">
-          <div class="field">
-            <label for="hours">Labor hours</label>
-            <input type="number" id="hours" value="6" min="0" step="0.5">
-          </div>
-          <div class="field">
-            <label for="rate">Crew rate ($/h)</label>
-            <input type="number" id="rate" value="78" min="0" step="1">
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="markup">Material markup (%)</label>
-          <input type="number" id="markup" value="25" min="0" step="5">
-        </div>
-
-        <p class="note" id="calcPreview"></p>
-        <button class="act" id="addLine">Add to estimate</button>
-      </div>
-
-      <div class="card">
-        <p class="card-title">Estimate — <span id="estClient">—</span></p>
-        <table>
-          <thead><tr><th>Line</th><th class="n">Qty</th><th class="n">Total</th><th></th></tr></thead>
-          <tbody id="estRows"></tbody>
-        </table>
-        <div class="totals">
-          <div class="trow"><span>Materials (with markup)</span><span id="tMat">$0.00</span></div>
-          <div class="trow"><span>Labor</span><span id="tLab">$0.00</span></div>
-          <div class="trow"><span>Overhead recovery</span><span id="tOh">$0.00</span></div>
-          <div class="trow"><span>Est. gross margin</span><span id="tMargin">—</span></div>
-          <div class="trow grand"><span>Quote</span><span id="tGrand">$0.00</span></div>
-        </div>
-        <p class="note">Overhead is pulled from the rate you set in Tools, multiplied by labor hours. Change it there and every estimate updates.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ---------- PIPELINE ---------- -->
-  <section class="view" id="view-pipeline">
-    <div class="card" style="margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
-        <div>
-          <p class="card-title" style="margin:0 0 4px;">Open pipeline value</p>
-          <p style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;margin:0;" id="pipeTotal">$0</p>
-        </div>
-        <p class="note" style="margin:0;max-width:340px;">Click a lead to move it one stage right. Won deals leave the board and land in booked revenue.</p>
-      </div>
-    </div>
-    <div class="board" id="board"></div>
-  </section>
-
-  <!-- ---------- TOOLS ---------- -->
-  <section class="view" id="view-tools">
-    <div class="grid tools-grid">
-
-      <div class="card">
-        <p class="card-title">Overhead recovery rate</p>
-        <div class="field"><label for="ohMonthly">Monthly overhead ($)</label>
-          <input type="number" id="ohMonthly" value="9400" step="100"></div>
-        <div class="field"><label for="ohCrews">Billable crew-hours / month</label>
-          <input type="number" id="ohCrews" value="520" step="10"></div>
-        <p class="readout" id="ohRate">$0.00<small>Overhead per billable hour</small></p>
-        <p class="note">Insurance, truck payments, phone, software, your own draw. Every billed hour has to carry a slice of it.</p>
-      </div>
-
-      <div class="card">
-        <p class="card-title">Break-even hourly rate</p>
-        <div class="field"><label for="beWage">Crew wage cost ($/h, loaded)</label>
-          <input type="number" id="beWage" value="34" step="1"></div>
-        <div class="field"><label for="beMargin">Target net margin (%)</label>
-          <input type="number" id="beMargin" value="18" step="1"></div>
-        <p class="readout" id="beRate">$0.00<small>Minimum billable rate</small></p>
-        <p class="note">Loaded wage means pay plus payroll tax, comp, and benefits — usually 1.3–1.4× the hourly.</p>
-      </div>
-
-      <div class="card">
-        <p class="card-title">Material pricer</p>
-        <div class="field"><label for="mpMaterial">Material</label><select id="mpMaterial"></select></div>
-        <div class="inline">
-          <div class="field"><label for="mpArea">Area (sq ft)</label>
-            <input type="number" id="mpArea" value="1200" step="50"></div>
-          <div class="field"><label for="mpDepth">Depth (in)</label>
-            <input type="number" id="mpDepth" value="3" step="0.5"></div>
-        </div>
-        <p class="readout" id="mpQty">—<small>Quantity needed</small></p>
-        <p class="readout" id="mpCost" style="margin-top:12px;">—<small>Material cost at yard price</small></p>
-      </div>
-
-      <div class="card">
-        <p class="card-title">Estimate vs. actual</p>
-        <div class="inline">
-          <div class="field"><label for="eaQuote">Quoted ($)</label>
-            <input type="number" id="eaQuote" value="4200" step="50"></div>
-          <div class="field"><label for="eaCost">Actual cost ($)</label>
-            <input type="number" id="eaCost" value="2980" step="50"></div>
-        </div>
-        <div class="inline">
-          <div class="field"><label for="eaEstH">Est. hours</label>
-            <input type="number" id="eaEstH" value="26" step="1"></div>
-          <div class="field"><label for="eaActH">Actual hours</label>
-            <input type="number" id="eaActH" value="31" step="1"></div>
-        </div>
-        <p class="readout" id="eaMargin">—<small>Realized margin</small></p>
-        <p class="note" id="eaVerdict"></p>
-      </div>
-
-    </div>
-  </section>
-
-</main>
-
-<script>
-/* =========================================================
-   STATE — everything the app knows, in one place.
-   In a real product this lives in a database. Here it's a
-   plain object, so refreshing the page resets it.
-   ========================================================= */
-const state = {
-  revenueWeeks: [8200, 9450, 7800, 11200, 10400, 12850, 9900, 13600],
-
-  jobs: [
-    {id:1, client:'Hargrove',  addr:'22 Larchwood Ct',  type:'Mulch install — 14 yd', start:'7:00', hours:2.5, value:1180, done:true},
-    {id:2, client:'Ptak',      addr:'8 Sycamore Ln',    type:'Weekly maintenance',    start:'9:45', hours:1.0, value:145,  done:true},
-    {id:3, client:'Delgado',   addr:'115 Kestrel Dr',   type:'Bed edging + Snapshot', start:'11:15',hours:2.0, value:640,  done:false},
-    {id:4, client:'Whitmore',  addr:'3 Old Mill Rd',    type:'Sod repair — 900 sf',   start:'1:30', hours:3.0, value:1420, done:false},
-    {id:5, client:'Ferro',     addr:'61 Brookline Ave', type:'Shrub prune',           start:'4:45', hours:1.5, value:385,  done:false}
-  ],
-
-  unassigned: [
-    {job:'Cardoza — stone walkway', when:'Wed', value:3850},
-    {job:'Bell — spring cleanup',   when:'Thu', value:720},
-    {job:'Iannone — mulch 22 yd',   when:'Thu', value:1690},
-    {job:'Rossi — drainage regrade',when:'Fri', value:2400}
-  ],
-
-  crews: [
-    {name:'Crew A — Marco',  util:92},
-    {name:'Crew B — Tavo',   util:78},
-    {name:'Crew C — Danny',  util:61}
-  ],
-
-  services: [
-    {name:'Maintenance contracts', jobs:64, rev:18400, margin:41},
-    {name:'Mulch & bed work',      jobs:19, rev:14250, margin:52},
-    {name:'Hardscape / stone',     jobs:4,  rev:9800,  margin:36},
-    {name:'Cleanups',              jobs:11, rev:4350,  margin:47},
-    {name:'Turf treatments',       jobs:23, rev:3600,  margin:58}
-  ],
-
-  alerts: [
-    {what:'Whitmore invoice — 41 days past due', amt:'$1,860'},
-    {what:'Crew C under 65% utilization, 2nd week', amt:'—'},
-    {what:'Bulk mulch supplier raised dyed black', amt:'+$6/yd'},
-    {what:'Trailer registration expires', amt:'Aug 19'}
-  ],
-
-  leads: [
-    {id:1, name:'Sandoval', src:'Referral — Ptak',   value:6400, stage:0},
-    {id:2, name:'Quinn HOA', src:'Cold call',        value:11800,stage:0},
-    {id:3, name:'Bianchi',   src:'Google',           value:2150, stage:1},
-    {id:4, name:'Mercer',    src:'Yard sign',        value:980,  stage:1},
-    {id:5, name:'Vasquez',   src:'Referral — Ferro', value:4700, stage:2},
-    {id:6, name:'Tran',      src:'Nextdoor',         value:3300, stage:2},
-    {id:7, name:'Okafor',    src:'Repeat client',    value:1450, stage:3}
-  ],
-
-  // mode: 'volume' needs depth; 'area' is flat per sq ft; 'rate1k' is lb per 1000 sq ft
-  materials: [
-    {name:'Hardwood mulch',       mode:'volume', unit:'cu yd', price:42},
-    {name:'Dyed black mulch',     mode:'volume', unit:'cu yd', price:54},
-    {name:'Screened topsoil',     mode:'volume', unit:'cu yd', price:38},
-    {name:'3/4" clean stone',     mode:'volume', unit:'ton',   price:68, tonsPerYd:1.4},
-    {name:'River jack 1-2"',      mode:'volume', unit:'ton',   price:96, tonsPerYd:1.35},
-    {name:'Sod — tall fescue',    mode:'area',   unit:'sq ft', price:0.68},
-    {name:'Snapshot 2.5TG',       mode:'rate1k', unit:'lb',    price:2.85, ratePer1k:3.5}
-  ],
-
-  estimate: {client:'', lines:[]},
-  overheadPerHour: 18.08
-};
-
-const STAGES = ['New', 'Contacted', 'Estimated', 'Won'];
-const money  = n => '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-const money0 = n => '$' + Math.round(n).toLocaleString('en-US');
-const $ = id => document.getElementById(id);
-
-/* =========================================================
-   LOCAL STORAGE - remembers your changes between visits.
-   Only the parts of state you can edit through the UI are
-   saved (jobs, leads, the current estimate, service revenue)
-   plus the values in the Estimates/Tools input fields.
-   Everything else stays as the built-in sample data.
-========================================================= */
-const STORAGE_KEY = 'fieldflow.savedData.v1';
-const DATA_KEYS = ['jobs', 'leads', 'estimate', 'services'];
-const FIELD_IDS = ['client','material','area','depth','hours','rate','markup',
-  'ohMonthly','ohCrews','beWage','beMargin','mpMaterial','mpArea','mpDepth',
-  'eaQuote','eaCost','eaEstH','eaActH'];
-
-function saveState() {
-  const toSave = {};
-  DATA_KEYS.forEach(k => toSave[k] = state[k]);
-  toSave.fields = {};
-  FIELD_IDS.forEach(id => { const el = $(id); if (el) toSave.fields[id] = el.value; });
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); }
-  catch (e) { console.warn('FieldFlow: could not save data', e); }
-}
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const saved = JSON.parse(raw);
-    DATA_KEYS.forEach(k => { if (saved[k] !== undefined) state[k] = saved[k]; });
-    if (saved.fields) {
-      FIELD_IDS.forEach(id => {
-        const el = $(id);
-        if (el && saved.fields[id] !== undefined) el.value = saved.fields[id];
-      });
-    }
-  } catch (e) { console.warn('FieldFlow: could not load saved data', e); }
-}
-
-/* =========================================================
-   NAVIGATION
-   ========================================================= */
-const TITLES = {
-  overview:['Dashboard','Overview'],
-  schedule:['Operations','Schedule'],
-  estimates:['Sales','Estimate Builder'],
-  pipeline:['Sales','Leads Pipeline'],
-  tools:['Field math','Tools']
-};
-
-$('nav').addEventListener('click', e => {
-  const btn = e.target.closest('button');
-  if (!btn) return;
-  const name = btn.dataset.view;
-
-  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b === btn));
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + name));
-
-  $('crumb').textContent     = TITLES[name][0];
-  $('viewTitle').textContent = TITLES[name][1];
-});
-
-/* =========================================================
-   OVERVIEW
-   ========================================================= */
-function completedToday() {
-  return state.jobs.filter(j => j.done).reduce((sum, j) => sum + j.value, 0);
-}
-
-function renderKpis() {
-  const mtd      = state.services.reduce((s, x) => s + x.rev, 0) + completedToday();
-  const pipeline = state.leads.filter(l => l.stage < 3).reduce((s, l) => s + l.value, 0);
-  const openJobs = state.jobs.filter(j => !j.done).length;
-  const totalJobs= state.services.reduce((s, x) => s + x.jobs, 0);
-
-  const cards = [
-    {num: money0(mtd),                 lbl:'Revenue MTD',      delta:'+14%', dir:'up'},
-    {num: openJobs + ' / ' + state.jobs.length, lbl:'Jobs left today', delta:'', dir:''},
-    {num: money0(pipeline),            lbl:'Open pipeline',    delta:'+3 leads', dir:'up'},
-    {num: money0(mtd / totalJobs),     lbl:'Avg job value',    delta:'-6%',  dir:'down'},
-    {num: '81%',                       lbl:'Crew utilization', delta:'+4pts', dir:'up'}
-  ];
-
-  $('kpis').innerHTML = cards.map(c => `
-    <div class="card kpi">
-      <p class="num">${c.num}${c.delta ? `<span class="delta ${c.dir}">${c.delta}</span>` : ''}</p>
-      <p class="lbl">${c.lbl}</p>
-    </div>`).join('');
-}
-
-function renderChart() {
-  const data = state.revenueWeeks;
-  const W = 640, H = 190, pad = 26, gap = 12;
-  const max = Math.max(...data) * 1.12;
-  const bw  = (W - pad * 2 - gap * (data.length - 1)) / data.length;
-
-  let svg = '';
-  // baseline
-  svg += `<line x1="${pad}" y1="${H-24}" x2="${W-pad}" y2="${H-24}" stroke="var(--line)" stroke-width="1"/>`;
-
-  data.forEach((v, i) => {
-    const h = (v / max) * (H - 58);
-    const x = pad + i * (bw + gap);
-    const y = H - 24 - h;
-    const last = i === data.length - 1;
-    svg += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${last ? 'var(--paint)' : 'var(--bark)'}" rx="1"/>`;
-    svg += `<text x="${x + bw/2}" y="${y - 6}" text-anchor="middle">${Math.round(v/1000)}k</text>`;
-    svg += `<text x="${x + bw/2}" y="${H - 8}" text-anchor="middle">W${i+1}</text>`;
-  });
-
-  $('chart').innerHTML = svg;
-}
-
-function renderUtil() {
-  $('utilList').innerHTML = state.crews.map(c => `
-    <div class="util">
-      <div class="util-top"><b>${c.name}</b><span>${c.util}%</span></div>
-      <div class="bar"><i class="${c.util > 90 ? 'hot' : ''}" style="width:${c.util}%"></i></div>
-    </div>`).join('');
-}
-
-function renderServices() {
-  $('serviceRows').innerHTML = state.services.map(s => `
-    <tr>
-      <td>${s.name}</td>
-      <td class="n">${s.jobs}</td>
-      <td class="n">${money0(s.rev)}</td>
-      <td class="n">${s.margin}%</td>
-    </tr>`).join('');
-
-  $('alertRows').innerHTML = state.alerts.map(a => `
-    <tr><td>${a.what}</td><td class="n">${a.amt}</td></tr>`).join('');
-}
-
-/* =========================================================
-   SCHEDULE
-   ========================================================= */
-function renderRoute() {
-  $('route').innerHTML = state.jobs.map(j => `
-    <div class="stop ${j.done ? 'done' : ''}" data-job="${j.id}">
-      <div class="stop-time">${j.start}</div>
-      <div class="stop-dot"></div>
-      <div class="stop-body">
-        <div>
-          <h4>${j.client}</h4>
-          <div class="stop-meta">${j.type} · ${j.addr}</div>
-        </div>
-        <div class="stop-right">
-          <div class="stop-val">${money0(j.value)}</div>
-          <button class="ghost">${j.done ? 'Reopen' : 'Complete'}</button>
-        </div>
-      </div>
-    </div>`).join('');
-
-  const booked = state.jobs.reduce((s, j) => s + j.value, 0);
-  const hours  = state.jobs.reduce((s, j) => s + j.hours, 0);
-  $('dayBooked').innerHTML = money0(booked) + '<small>Booked today</small>';
-  $('dayDone').innerHTML   = money0(completedToday()) + '<small>Completed</small>';
-  $('dayHours').innerHTML  = hours.toFixed(1) + ' h<small>Field hours scheduled</small>';
-
-  $('unassigned').innerHTML = state.unassigned.map(u => `
-    <tr><td>${u.job}</td><td class="n">${u.when}</td><td class="n">${money0(u.value)}</td></tr>`).join('');
-}
-
-$('route').addEventListener('click', e => {
-  const stop = e.target.closest('.stop');
-  if (!stop) return;
-  const job = state.jobs.find(j => j.id === Number(stop.dataset.job));
-  job.done = !job.done;
-renderRoute();
-renderKpis();
-saveState();
-});
-
-/* =========================================================
-   ESTIMATE BUILDER
-   ========================================================= */
-function fillMaterialSelects() {
-  const opts = state.materials.map((m, i) =>
-    `<option value="${i}">${m.name} — ${money(m.price)}/${m.unit}</option>`).join('');
-  $('material').innerHTML   = opts;
-  $('mpMaterial').innerHTML = opts;
-}
-
-/* Given a material and dimensions, how much do we need and
-   what does it cost at yard price? One function, used by both
-   the estimate builder and the standalone pricer. */
-function materialQuantity(mat, areaSqFt, depthIn) {
-  if (mat.mode === 'area') {
-    return {qty: areaSqFt, unit: mat.unit};
-  }
-  if (mat.mode === 'rate1k') {
-    return {qty: (areaSqFt / 1000) * mat.ratePer1k, unit: mat.unit};
-  }
-  // volume
-  const cubicYards = (areaSqFt * (depthIn / 12)) / 27;
-  if (mat.unit === 'ton') {
-    return {qty: cubicYards * mat.tonsPerYd, unit: 'ton'};
-  }
-  return {qty: cubicYards, unit: 'cu yd'};
-}
-
-function needsDepth(mat) { return mat.mode === 'volume'; }
-
-function syncDepthField() {
-  const mat = state.materials[Number($('material').value)];
-  $('depthWrap').style.visibility = needsDepth(mat) ? 'visible' : 'hidden';
-  previewLine();
-}
-
-function previewLine() {
-  const mat   = state.materials[Number($('material').value)];
-  const area  = Number($('area').value) || 0;
-  const depth = Number($('depth').value) || 0;
-  const {qty, unit} = materialQuantity(mat, area, depth);
-  const raw = qty * mat.price;
-  $('calcPreview').textContent =
-    `${qty.toFixed(2)} ${unit} at ${money(mat.price)} = ${money(raw)} before markup.`;
-}
-
-function addLine() {
-  const mat    = state.materials[Number($('material').value)];
-  const area   = Number($('area').value)   || 0;
-  const depth  = Number($('depth').value)  || 0;
-  const hours  = Number($('hours').value)  || 0;
-  const rate   = Number($('rate').value)   || 0;
-  const markup = Number($('markup').value) || 0;
-
-  if (area <= 0) return;
-
-  const {qty, unit} = materialQuantity(mat, area, depth);
-  const matCost = qty * mat.price * (1 + markup / 100);
-  const labCost = hours * rate;
-
-  state.estimate.client = $('client').value || 'Untitled';
-  state.estimate.lines.push({
-    label: `${mat.name} — ${area.toLocaleString()} sf`,
-    qty: `${qty.toFixed(2)} ${unit}`,
-    matCost, labCost, hours
-  });
-
-  renderEstimate();
-  saveState();
-}
-
-function renderEstimate() {
-  const est = state.estimate;
-  $('estClient').textContent = est.client || '—';
-
-  if (est.lines.length === 0) {
-    $('estRows').innerHTML = `<tr><td colspan="4" class="empty">No lines yet. Build one on the left.</td></tr>`;
-  } else {
-    $('estRows').innerHTML = est.lines.map((l, i) => `
-      <tr>
-        <td>${l.label}<br><span style="color:var(--muted);font-size:12px;">${l.hours} h labor</span></td>
-        <td class="n">${l.qty}</td>
-        <td class="n">${money(l.matCost + l.labCost)}</td>
-        <td class="n"><button class="ghost" data-del="${i}">×</button></td>
-      </tr>`).join('');
-  }
-
-  const mat   = est.lines.reduce((s, l) => s + l.matCost, 0);
-  const lab   = est.lines.reduce((s, l) => s + l.labCost, 0);
-  const hrs   = est.lines.reduce((s, l) => s + l.hours, 0);
-  const oh    = hrs * state.overheadPerHour;
-  const total = mat + lab + oh;
-  const cost  = mat / 1.25 + lab * 0.55 + oh;   // rough direct cost
-  const margin = total > 0 ? ((total - cost) / total) * 100 : 0;
-
-  $('tMat').textContent   = money(mat);
-  $('tLab').textContent   = money(lab);
-  $('tOh').textContent    = money(oh);
-  $('tGrand').textContent = money(total);
-  $('tMargin').textContent = total > 0 ? margin.toFixed(1) + '%' : '—';
-}
-
-$('estRows').addEventListener('click', e => {
-  const btn = e.target.closest('[data-del]');
-  if (!btn) return;
-  state.estimate.lines.splice(Number(btn.dataset.del), 1);
-renderEstimate();
-saveState();
-});
-
-/* =========================================================
-   PIPELINE
-   ========================================================= */
-function renderBoard() {
-  $('board').innerHTML = STAGES.map((stage, si) => {
-    const inStage = state.leads.filter(l => l.stage === si);
-    const sum = inStage.reduce((s, l) => s + l.value, 0);
-    const cards = inStage.length
-      ? inStage.map(l => `
-          <div class="lead" tabindex="0" data-lead="${l.id}">
-            <h4>${l.name}</h4>
-            <div class="src">${l.src}</div>
-            <span class="amt">${money0(l.value)}</span>
-          </div>`).join('')
-      : `<div class="col-empty">Nothing here</div>`;
-
-    return `<div>
-      <div class="col-head"><h3>${stage}</h3><span class="col-sum">${inStage.length} · ${money0(sum)}</span></div>
-      ${cards}
-    </div>`;
-  }).join('');
-
-  const open = state.leads.filter(l => l.stage < 3).reduce((s, l) => s + l.value, 0);
-  $('pipeTotal').textContent = money0(open);
-}
-
-function advanceLead(id) {
-  const lead = state.leads.find(l => l.id === id);
-  if (!lead) return;
-  if (lead.stage < STAGES.length - 1) {
-    lead.stage++;
-  } else {
-    // Won leads leave the board and book as revenue
-    state.leads = state.leads.filter(l => l.id !== id);
-    state.services[0].rev += lead.value;
-    state.services[0].jobs += 1;
-  }
-  renderBoard();
-renderKpis();
-renderServices();
-saveState();
-}
-
-$('board').addEventListener('click', e => {
-  const card = e.target.closest('.lead');
-  if (card) advanceLead(Number(card.dataset.lead));
-});
-$('board').addEventListener('keydown', e => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const card = e.target.closest('.lead');
-  if (card) { e.preventDefault(); advanceLead(Number(card.dataset.lead)); }
-});
-
-/* =========================================================
-   TOOLS
-   ========================================================= */
-function calcOverhead() {
-  const monthly = Number($('ohMonthly').value) || 0;
-  const hours   = Number($('ohCrews').value)   || 0;
-  const rate    = hours > 0 ? monthly / hours : 0;
-  state.overheadPerHour = rate;
-  $('ohRate').innerHTML = money(rate) + '<small>Overhead per billable hour</small>';
-  calcBreakeven();
-  renderEstimate();  // estimates depend on this number
-}
-
-function calcBreakeven() {
-  const wage   = Number($('beWage').value)   || 0;
-  const margin = Number($('beMargin').value) || 0;
-  const base   = wage + state.overheadPerHour;
-  const rate   = margin < 100 ? base / (1 - margin / 100) : base;
-  $('beRate').innerHTML = money(rate) + '<small>Minimum billable rate</small>';
-}
-
-function calcPricer() {
-  const mat   = state.materials[Number($('mpMaterial').value)];
-  const area  = Number($('mpArea').value)  || 0;
-  const depth = Number($('mpDepth').value) || 0;
-  const {qty, unit} = materialQuantity(mat, area, depth);
-  $('mpQty').innerHTML  = qty.toFixed(2) + ' ' + unit + '<small>Quantity needed</small>';
-  $('mpCost').innerHTML = money(qty * mat.price) + '<small>Material cost at yard price</small>';
-}
-
-function calcEstVsActual() {
-  const quote = Number($('eaQuote').value) || 0;
-  const cost  = Number($('eaCost').value)  || 0;
-  const estH  = Number($('eaEstH').value)  || 0;
-  const actH  = Number($('eaActH').value)  || 0;
-
-  const margin = quote > 0 ? ((quote - cost) / quote) * 100 : 0;
-  $('eaMargin').innerHTML = margin.toFixed(1) + '%<small>Realized margin</small>';
-
-  const drift = estH > 0 ? ((actH - estH) / estH) * 100 : 0;
-  let verdict;
-  if (drift > 15)       verdict = `Ran ${drift.toFixed(0)}% over on hours. Bid this job type higher or scope it tighter.`;
-  else if (drift < -10) verdict = `Came in ${Math.abs(drift).toFixed(0)}% under. You may be padding — you could win more bids.`;
-  else                  verdict = `Hours landed within ${Math.abs(drift).toFixed(0)}% of estimate. That's a solid bid.`;
-  $('eaVerdict').textContent = verdict;
-}
-
-/* =========================================================
-   WIRING
-   ========================================================= */
-['material'].forEach(id => $(id).addEventListener('change', syncDepthField));
-['area','depth'].forEach(id => $(id).addEventListener('input', previewLine));
-$('addLine').addEventListener('click', addLine);
-
-['ohMonthly','ohCrews'].forEach(id => $(id).addEventListener('input', calcOverhead));
-['beWage','beMargin'].forEach(id => $(id).addEventListener('input', calcBreakeven));
-['mpMaterial','mpArea','mpDepth'].forEach(id => $(id).addEventListener('input', calcPricer));
-['eaQuote','eaCost','eaEstH','eaActH'].forEach(id => $(id).addEventListener('input', calcEstVsActual));
-
-['client','area','depth','hours','rate','markup','ohMonthly','ohCrews','beWage','beMargin','mpArea','mpDepth','eaQuote','eaCost','eaEstH','eaActH'].forEach(id => $(id).addEventListener('input', saveState));
-['material','mpMaterial'].forEach(id => $(id).addEventListener('change', saveState));
-
-$('resetData').addEventListener('click', () => {
-  if (!confirm('This clears any changes you made (schedule, estimate, pipeline moves, tool inputs) and restores the original sample data. Continue?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-});
-
-/* Boot */
-fillMaterialSelects();
-loadState();
-renderKpis();
-renderChart();
-renderUtil();
-renderServices();
-renderRoute();
-renderBoard();
-syncDepthField();
-renderEstimate();
-calcOverhead();
-calcPricer();
-calcEstVsActual();
-</script>
-</body>
-</html>
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>FieldFlow — Landscaping Operations</title>
+   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+   <style>
+      :root{
+         --ink: #1C1916;
+         --paper: #E4E2DC;
+         --card: #F2F1ED;
+         --paint: #FF5A1F;
+         --bark: #4A3B2A;
+         --soil: #8C8073;
+         --moss: #5C7247;
+         --line: #C9C6BD;
+         --muted: #6E695F;
+         --radius: 3px;
+      }
+      *{box-sizing:border-box;}
+      html,body{height:100%;}
+      body{margin:0;background:var(--paper);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;display:flex;}
+      .sidebar{width:212px;flex-shrink:0;background:var(--ink);color:var(--paper);padding:24px 0;display:flex;flex-direction:column;min-height:100vh;}
+      .brand{padding:0 22px 26px;}
+      .brand-mark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.02em;text-transform:uppercase;line-height:1;}
+      .brand-mark em{color:var(--paint);font-style:normal;}
+      .brand-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8C8073;margin-top:5px;}
+      .nav{list-style:none;margin:0;padding:0;}
+      .nav button{width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;color:#B8B2A6;cursor:pointer;padding:11px 22px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;letter-spacing:.07em;text-transform:uppercase;}
+      .nav button:hover{color:var(--paper);background:#262220;}
+      .nav button.on{color:var(--paper);border-left-color:var(--paint);background:#262220;}
+      .nav button:focus-visible{outline:2px solid var(--paint);outline-offset:-2px;}
+      .sidebar-foot{margin-top:auto;padding:20px 22px 0;border-top:1px solid #332E2A;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7A7368;line-height:1.7;}
+      .main{flex:1;min-width:0;padding:28px 32px 60px;overflow-x:hidden;}
+      .topbar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
+      .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--paint);margin:0 0 4px;}
+      h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:36px;line-height:1;text-transform:uppercase;margin:0;}
+      .weather{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.7;}
+      .view{display:none;}
+      .view.on{display:block;}
+      .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+      .card-title{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 14px;color:var(--muted);}
+      .grid{display:grid;gap:14px;}
+      .kpis{grid-template-columns:repeat(auto-fit,minmax(168px,1fr));margin-bottom:14px;}
+      .two{grid-template-columns:1.45fr 1fr;}
+      .tools-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+      .kpi .num{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:31px;line-height:1;margin:0;}
+      .kpi .lbl{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:7px 0 0;}
+      .delta{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-left:7px;}
+      .up{color:var(--moss);} .down{color:var(--paint);}
+      .chart{width:100%;height:190px;display:block;}
+      .chart text{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--muted);}
+      .route{position:relative;padding-left:56px;}
+      .route::before{content:'';position:absolute;left:47px;top:6px;bottom:6px;width:1px;background:var(--line);}
+      .stop{position:relative;margin-bottom:10px;}
+      .stop-time{position:absolute;left:-56px;top:9px;width:42px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+      .stop-dot{position:absolute;left:-10px;top:13px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:2px solid var(--soil);}
+      .stop.done .stop-dot{background:var(--moss);border-color:var(--moss);}
+      .stop-body{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--soil);border-radius:var(--radius);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+      .stop.done .stop-body{border-left-color:var(--moss);opacity:.62;}
+      .stop-body h4{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;}
+      .stop.done h4{text-decoration:line-through;}
+      .stop-meta{font-size:13px;color:var(--muted);margin-top:2px;}
+      .stop-right{text-align:right;flex-shrink:0;display:flex;align-items:center;gap:8px;}
+      .stop-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;}
+      .board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+      .col-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;margin-bottom:10px;border-bottom:2px solid var(--ink);}
+      .col-head h3{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;}
+      .col-sum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+      .lead{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:11px;margin-bottom:9px;cursor:pointer;transition:transform .12s ease,border-color .12s ease;position:relative;}
+      .lead:hover{transform:translateX(2px);border-color:var(--paint);}
+      .lead:focus-visible{outline:2px solid var(--paint);outline-offset:1px;}
+      .lead h4{margin:0 0 3px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;padding-right:18px;}
+      .lead .src{font-size:12px;color:var(--muted);}
+      .lead .amt{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;display:block;margin-top:6px;}
+      .lead .del{position:absolute;top:8px;right:9px;background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;}
+      .lead .del:hover{color:var(--paint);}
+      .col-empty{border:1px dashed var(--line);border-radius:var(--radius);padding:16px 11px;font-size:13px;color:var(--muted);text-align:center;}
+      label{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:.07em;text-transform:uppercase;margin:0 0 5px;color:var(--muted);}
+      input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:14px;}
+      input:focus,select:focus,textarea:focus{outline:2px solid var(--paint);outline-offset:1px;}
+      .field{margin-bottom:13px;}
+      .inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+      .inline3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+      button.act{background:var(--paint);color:#fff;border:0;border-radius:var(--radius);padding:10px 16px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;}
+      button.act:hover{background:#E64A12;}
+      button.act:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+      button.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:var(--radius);padding:5px 10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
+      button.ghost:hover{border-color:var(--paint);color:var(--paint);}
+      table{width:100%;border-collapse:collapse;}
+      th{text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 0 7px;border-bottom:1px solid var(--line);font-weight:600;}
+      td{padding:9px 6px 9px 0;border-bottom:1px solid var(--line);font-size:14px;}
+      td.n,th.n{text-align:right;font-family:'IBM Plex Mono',monospace;}
+      tr:last-child td{border-bottom:0;}
+      .totals{border-top:2px solid var(--ink);margin-top:14px;padding-top:12px;}
+      .trow{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;}
+      .trow span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:500;}
+      .trow.grand{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:10px;margin-top:6px;border-top:1px solid var(--line);}
+      .trow.grand span:last-child{font-family:'IBM Plex Mono',monospace;font-size:22px;}
+      .empty{color:var(--muted);font-size:14px;padding:14px 0;}
+      .note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6;}
+      .readout{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;margin:14px 0 0;}
+      .readout small{display:block;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
+      .util{margin-bottom:13px;}
+      .util-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
+      .util-top b{font-family:'Barlow Condensed',sans-serif;font-size:15px;text-transform:uppercase;letter-spacing:.03em;}
+      .util-top span{font-family:'IBM Plex Mono',monospace;color:var(--muted);}
+      .bar{height:7px;background:#D6D3CB;border-radius:99px;overflow:hidden;}
+      .bar i{display:block;height:100%;background:var(--moss);}
+      .bar i.hot{background:var(--paint);}
+      .row-actions{display:flex;gap:6px;justify-content:flex-end;}
+      .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+      .tag.paid{background:rgba(92,114,71,.16);color:var(--moss);}
+      .tag.overdue{background:rgba(255,90,31,.16);color:var(--paint);}
+      .tag.unpaid{background:rgba(140,128,115,.2);color:var(--soil);}
+      .dateNav{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+      .dateNav b{font-family:'Barlow Condensed',sans-serif;font-size:18px;text-transform:uppercase;}
+      .section-sub{color:var(--muted);font-size:13px;margin:-8px 0 16px;}
+      @media (max-width:900px){
+         .two,.board{grid-template-columns:1fr;}
+         body{flex-direction:column;}
+         .sidebar{width:100%;min-height:0;flex-direction:column;padding:16px 0 0;}
+         .nav{display:flex;overflow-x:auto;}
+         .nav button{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;padding:10px 16px;}
+         .nav button.on{border-left:0;border-bottom-color:var(--paint);}
+         .sidebar-foot{display:none;}
+         .main{padding:20px 16px 40px;}
+      }
+      @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+      </style>
+   </head>
+   <body></body>
+   </style></title>
+   </head>
