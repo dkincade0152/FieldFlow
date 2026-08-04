@@ -308,8 +308,9 @@ tr:last-child td{border-bottom:0;}
   <div class="sidebar-foot">
     3 crews active<br>
     11 open jobs<br>
-    Next invoice run: Fri
-  </div>
+    Next invoice run: Fri<br>
+<button class="ghost" id="resetData" style="margin-top:10px;width:100%;border-color:#4A443C;color:#8C8073;">Reset sample data</button>
+</div>
 </aside>
 
 <!-- ========================= MAIN ========================= -->
@@ -600,6 +601,43 @@ const money0 = n => '$' + Math.round(n).toLocaleString('en-US');
 const $ = id => document.getElementById(id);
 
 /* =========================================================
+   LOCAL STORAGE - remembers your changes between visits.
+   Only the parts of state you can edit through the UI are
+   saved (jobs, leads, the current estimate, service revenue)
+   plus the values in the Estimates/Tools input fields.
+   Everything else stays as the built-in sample data.
+========================================================= */
+const STORAGE_KEY = 'fieldflow.savedData.v1';
+const DATA_KEYS = ['jobs', 'leads', 'estimate', 'services'];
+const FIELD_IDS = ['client','material','area','depth','hours','rate','markup',
+  'ohMonthly','ohCrews','beWage','beMargin','mpMaterial','mpArea','mpDepth',
+  'eaQuote','eaCost','eaEstH','eaActH'];
+
+function saveState() {
+  const toSave = {};
+  DATA_KEYS.forEach(k => toSave[k] = state[k]);
+  toSave.fields = {};
+  FIELD_IDS.forEach(id => { const el = $(id); if (el) toSave.fields[id] = el.value; });
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); }
+  catch (e) { console.warn('FieldFlow: could not save data', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    DATA_KEYS.forEach(k => { if (saved[k] !== undefined) state[k] = saved[k]; });
+    if (saved.fields) {
+      FIELD_IDS.forEach(id => {
+        const el = $(id);
+        if (el && saved.fields[id] !== undefined) el.value = saved.fields[id];
+      });
+    }
+  } catch (e) { console.warn('FieldFlow: could not load saved data', e); }
+}
+
+/* =========================================================
    NAVIGATION
    ========================================================= */
 const TITLES = {
@@ -729,8 +767,9 @@ $('route').addEventListener('click', e => {
   if (!stop) return;
   const job = state.jobs.find(j => j.id === Number(stop.dataset.job));
   job.done = !job.done;
-  renderRoute();
-  renderKpis();
+renderRoute();
+renderKpis();
+saveState();
 });
 
 /* =========================================================
@@ -801,6 +840,7 @@ function addLine() {
   });
 
   renderEstimate();
+  saveState();
 }
 
 function renderEstimate() {
@@ -838,7 +878,8 @@ $('estRows').addEventListener('click', e => {
   const btn = e.target.closest('[data-del]');
   if (!btn) return;
   state.estimate.lines.splice(Number(btn.dataset.del), 1);
-  renderEstimate();
+renderEstimate();
+saveState();
 });
 
 /* =========================================================
@@ -879,8 +920,9 @@ function advanceLead(id) {
     state.services[0].jobs += 1;
   }
   renderBoard();
-  renderKpis();
-  renderServices();
+renderKpis();
+renderServices();
+saveState();
 }
 
 $('board').addEventListener('click', e => {
@@ -952,8 +994,18 @@ $('addLine').addEventListener('click', addLine);
 ['mpMaterial','mpArea','mpDepth'].forEach(id => $(id).addEventListener('input', calcPricer));
 ['eaQuote','eaCost','eaEstH','eaActH'].forEach(id => $(id).addEventListener('input', calcEstVsActual));
 
+['client','area','depth','hours','rate','markup','ohMonthly','ohCrews','beWage','beMargin','mpArea','mpDepth','eaQuote','eaCost','eaEstH','eaActH'].forEach(id => $(id).addEventListener('input', saveState));
+['material','mpMaterial'].forEach(id => $(id).addEventListener('change', saveState));
+
+$('resetData').addEventListener('click', () => {
+  if (!confirm('This clears any changes you made (schedule, estimate, pipeline moves, tool inputs) and restores the original sample data. Continue?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
 /* Boot */
 fillMaterialSelects();
+loadState();
 renderKpis();
 renderChart();
 renderUtil();
